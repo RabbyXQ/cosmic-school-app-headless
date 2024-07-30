@@ -15,6 +15,7 @@ import {
   Collapse
 } from '@chakra-ui/react';
 import { ChevronDownIcon, ChevronUpIcon } from '@chakra-ui/icons';
+import { title } from 'process';
 
 // JSON data for navigation
 const navItems = [
@@ -59,6 +60,17 @@ const navItems = [
       { label: "নোট", link: "/downloads/note" },
       { label: "অন্যান্য", link: "/downloads/others" }
     ]
+  },
+  {
+    title: "ড্যাশবোর্ড",
+    items: [
+        {
+            label: "লগইন", link: "/login"
+        },
+        {
+            label: "রেজিস্টার", link: "/register"
+        },
+    ]
   }
 ];
 
@@ -76,7 +88,7 @@ const DesktopMenu: React.FC = () => {
   return (
     <Flex
       display={{ base: 'none', md: 'flex' }}
-      p="4"
+      p="2"
       alignItems="center"
       justifyContent="space-around"
       wrap="wrap"
@@ -94,12 +106,12 @@ const DesktopMenu: React.FC = () => {
                     variant="ghost"
                     rightIcon={
                       isOpen
-                        ? <ChevronUpIcon
-                            transition="transform 0.05s"
+                        ? <ChevronDownIcon
+                            transition="transform 0.2s"
                             transform={isOpen ? 'rotate(180deg)' : 'rotate(0deg)'}
                           />
                         : <ChevronDownIcon
-                            transition="transform 0.05s"
+                            transition="transform 0.2s"
                             transform={isOpen ? 'rotate(180deg)' : 'rotate(0deg)'}
                           />
                     }

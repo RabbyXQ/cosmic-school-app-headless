@@ -1,4 +1,3 @@
-// theme.tsx
 import { extendTheme, ThemeConfig } from '@chakra-ui/react';
 import { mode } from '@chakra-ui/theme-tools';
 
@@ -15,6 +14,11 @@ const theme = extendTheme({
     global: (props: any) => ({
       body: {
         bg: mode('gray.100', 'gray.900')(props),
+      },
+      a: {
+        _hover: {
+          color: 'teal.300', // Hover color for links
+        },
       },
     }),
   },

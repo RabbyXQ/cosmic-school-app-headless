@@ -20,6 +20,7 @@ import {
   VStack,
   Icon,
   Tooltip,
+  Heading,
 } from '@chakra-ui/react';
 import { SunIcon, MoonIcon, HamburgerIcon, PhoneIcon, EmailIcon } from '@chakra-ui/icons';
 import { useTheme } from '@chakra-ui/react';
@@ -101,7 +102,7 @@ const Header: React.FC = () => {
           </Link>
           <Box>
             {metadata?.name && (
-              <Text
+              <Heading
                 display={{ base: 'none', md: 'flex' }}
                 fontSize={{ base: 'md', md: 'lg' }}
                 fontWeight="bold"
@@ -113,7 +114,8 @@ const Header: React.FC = () => {
                 lineHeight="1.2"
               >
                 {metadata.name}
-              </Text>
+              </Heading>
+              
             )}
           </Box>
         </Box>

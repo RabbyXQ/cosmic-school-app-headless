@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { Box, Input, Button, List, ListItem, Text, Heading, useColorModeValue, Collapse, IconButton } from '@chakra-ui/react';
-import { ChevronDownIcon, ChevronUpIcon } from '@chakra-ui/icons';
+import { ChevronDownIcon, ChevronUpIcon, SearchIcon } from '@chakra-ui/icons';
 
 const GOOGLE_API_KEY = 'AIzaSyAODLd7G4ClBIrM-_1dalfYS9LYUG5rfgw';
 const SEARCH_ENGINE_ID = '44267b1e30ffd4699';
@@ -42,8 +42,8 @@ const SearchWithGoogle: React.FC = () => {
   const resultContainerBg = useColorModeValue('white.50', 'gray.900');
 
   return (
-    <Box bg={bgColor} p={4} borderRadius="md" boxShadow="md">
-      <Heading size="md" mb={4} color={textColor}>Google Search</Heading>
+    <Box bg={bgColor} p={4} >
+      <Heading colorScheme='teal' size="md" mb={4} color={textColor}> <SearchIcon color="teal"/> Google Search</Heading>
       <Input
         value={query}
         onChange={(e) => setQuery(e.target.value)}
