@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Container, Heading, Link, List, ListItem, Flex, Text, useColorModeValue } from '@chakra-ui/react';
-import { FaBullhorn } from 'react-icons/fa';
+import { FaBold, FaBullhorn } from 'react-icons/fa';
 
 const notices = [
   { date: '28 Jul 24', href: 'page.php?id=355', text: '২০২৪-২০২৫ শিক্ষাবর্ষের একাদশ শ্রেণির ভর্তি ও ক্লাস শুরুর নোটিশ' },
@@ -36,7 +36,7 @@ const NoticeBoard: React.FC = () => {
                   <Text fontSize="sm" fontWeight="bold">{notice.date}</Text>
                 </Box>
                 <Box flex="1" ml={4}>
-                  <Text fontSize="md">
+                  <Text fontWeight="bold" fontSize="lg">
                     <Link href={notice.href} color={linkColor} _hover={{ textDecoration: 'underline' }}>
                       {notice.text}
                     </Link>

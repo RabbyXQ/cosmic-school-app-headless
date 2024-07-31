@@ -13,11 +13,11 @@ const theme = extendTheme({
   styles: {
     global: (props: any) => ({
       body: {
-        bg: mode('gray.100', 'gray.900')(props),
+        bg: mode('gray.50', 'gray.900')(props),
       },
       a: {
         _hover: {
-          color: 'teal.300', // Hover color for links
+          color: 'teal.300', 
         },
       },
     }),

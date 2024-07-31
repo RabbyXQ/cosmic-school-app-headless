@@ -1,6 +1,19 @@
 import React from 'react';
 import { Box, Container, Flex, Grid, GridItem, Heading, Text, Image, Link, Icon, useColorModeValue } from '@chakra-ui/react';
 import { FaPaintBrush, FaBook, FaUser, FaCalendarAlt, FaGraduationCap, FaClock } from 'react-icons/fa';
+import { title } from 'process';
+
+const brief = 
+{
+  title: "বিস্তর বর্ণনা",
+  description: "১৯৯৩ সালে প্রতিষ্ঠিত ভোগাইল বগাদি মাধ্যমিক বিদ্যালয়, আলমডাঙ্গা উপজেলার মধ্যে অন্যতম স্বনামধন্য একটি প্রতিষ্ঠান । বিদ্যালয়টি সংশ্লিষ্ট এলাকায় মাধ্যমিক শিক্ষা নিশ্চিত করার লক্ষে প্রতিষ্টিত হয়। প্রাথমিক ভাবে খুব সীমিত সংখ্যক ছাত্রছাত্রী নিয়ে বিদ্যালয়টি যাত্রা শুরু করলেও বর্তমানে প্রতিষ্ঠানটিতে প্রতি বছর ২০০+ ছাত্রছাত্রী ভর্তি হয়।  বর্তমানে বিদ্যালয়টিতে মহেশপুর, খোরোদ, গৌরীহ্রদ ও ভোগাইল বগাদি থেকে ছাত্রছাত্রী পড়তে আসে।",
+  image: "https://www.noakhalicoll.gov.bd/midea/featuredimage/featuredimage2023-08-04-13-16-10_64ccfa1a4eee0.jpg",
+  links: {
+      title:  "এক ঝলক",
+      description: "",
+      link: ""
+  }
+}
 
 const Brief: React.FC = () => {
   const bgColor = useColorModeValue('gray.100', 'gray.800');
@@ -11,15 +24,15 @@ const Brief: React.FC = () => {
       <Container maxW="container.lg">
         <Box textAlign="justify" mb={8}>
           <Heading colorScheme='teal' as="h1" size="xl" mb={4}>
-            Brief of History
+            {brief.title}
           </Heading>
-          <Text fontSize="lg" color={textColor}>
-            Noakhali Government College was established in 1963, making it one of the oldest and most prestigious educational institutions in Noakhali district, Bangladesh. The college was founded with the vision of providing quality higher education to students from the region and beyond. Initially, the college started its journey as an intermediate college offering education up to the intermediate level. Over the years, it gradually expanded its academic programs and facilities to cater to the growing needs of students seeking higher education.
+          <Text fontWeight="bold" fontSize="lg" color={textColor}>
+          {brief.description}
           </Text>
         </Box>
         <Grid templateColumns={{ base: '1fr', md: 'repeat(3, 1fr)' }} gap={6}>
           <GridItem>
-            <Image src="https://www.noakhalicoll.gov.bd/midea/featuredimage/featuredimage2023-08-04-13-16-10_64ccfa1a4eee0.jpg" alt="College Image" borderRadius="md" />
+            <Image src={brief.image} alt="College Image" borderRadius="md" />
           </GridItem>
           <GridItem>
             <Flex direction="column" gap={4}>

@@ -14,6 +14,8 @@ import Message from './Message';
 import NoticeBoard from './NoticeBoard';
 import News from './News';
 import Events from './Events';
+import { mission } from './mocks/mission';
+
 
 function Home() {
   const isMobile = useBreakpointValue({ base: true, xm: true, md: false, lg: false });
@@ -24,7 +26,7 @@ function Home() {
       
       <Box maxW="container">
         <SliderComponent/>
-        <Mission/>
+        <Mission items={mission}/>
         <Update/>
         <Brief/>
         <Grid

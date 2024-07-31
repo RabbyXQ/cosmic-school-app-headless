@@ -3,7 +3,7 @@ import { Box, Flex, Text, Link, Stack, useColorModeValue, Divider, Input, Button
 import { EmailIcon, PhoneIcon, ViewIcon } from '@chakra-ui/icons';
 
 const Footer: React.FC = () => {
-  const bgColor = useColorModeValue('teal.50', 'gray.700');
+  const bgColor = useColorModeValue('gray.200', 'gray.700');
   const textColor = useColorModeValue('gray.600', 'gray.300');
   const linkColor = useColorModeValue('teal.500', 'teal.300');
 
@@ -62,8 +62,7 @@ const Footer: React.FC = () => {
           </Stack>
         </Box>
       </Flex>
-      <Divider my="6" />
-      <Box bg="green.300" w="100%" alignItems="center" alignContent="center" height={50} maxW="container">
+      <Box bg="green.500" w="100%" alignItems="center" alignContent="center" height={50} maxW="container">
         <Text color='white' textAlign="center" fontSize="md">
           © {new Date().getFullYear()} Your Company. All rights reserved.
         </Text>

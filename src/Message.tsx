@@ -3,7 +3,7 @@ import { Box, Container, Grid, GridItem, Heading, Text, Image, Link, Flex, useCo
 import { FaArrowCircleRight } from 'react-icons/fa';
 
 const Message: React.FC = () => {
-  const bgColor = useColorModeValue('gray.50', 'gray.700');
+  const bgColor = useColorModeValue('gray.50', 'gray.800');
   const textColor = useColorModeValue('gray.800', 'gray.200');
 
   return (

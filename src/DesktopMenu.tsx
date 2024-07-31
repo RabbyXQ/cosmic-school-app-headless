@@ -92,7 +92,8 @@ const DesktopMenu: React.FC = () => {
       alignItems="center"
       justifyContent="space-around"
       wrap="wrap"
-      borderTop="4px solid teal"
+      borderTop="4px solid"
+      borderColor="teal.300"
     >
       <HStack spacing="4" as="nav">
         {navItems.map((navItem, index) => {

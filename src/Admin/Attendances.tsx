@@ -71,7 +71,27 @@ const initialStudents: Student[] = [
   { id: '230101001', name: 'John Doe', sectionId: 'section1' },
   { id: '230101002', name: 'Jane Smith', sectionId: 'section1' },
   { id: '230101003', name: 'Jim Brown', sectionId: 'section2' },
-  { id: '230101004', name: 'Emily Davis', sectionId: 'section3' }
+  { id: '230101004', name: 'Emily Davis', sectionId: 'section3' },
+  { id: '230101005', name: 'John Doe', sectionId: 'section1' },
+  { id: '230101006', name: 'Jane Smith', sectionId: 'section1' },
+  { id: '230101007', name: 'Jim Brown', sectionId: 'section2' },
+  { id: '230101008', name: 'Emily Davis', sectionId: 'section3' },
+  { id: '230101009', name: 'John Doe', sectionId: 'section1' },
+  { id: '230101010', name: 'Jane Smith', sectionId: 'section1' },
+  { id: '230101011', name: 'Jim Brown', sectionId: 'section2' },
+  { id: '230101012', name: 'Emily Davis', sectionId: 'section3' },
+  { id: '230101013', name: 'John Doe', sectionId: 'section1' },
+  { id: '230101014', name: 'Jane Smith', sectionId: 'section1' },
+  { id: '230101015', name: 'Jim Brown', sectionId: 'section2' },
+  { id: '230101016', name: 'Emily Davis', sectionId: 'section3' },
+  { id: '230101017', name: 'John Doe', sectionId: 'section1' },
+  { id: '230101018', name: 'Jane Smith', sectionId: 'section1' },
+  { id: '230101019', name: 'Jim Brown', sectionId: 'section2' },
+  { id: '230101020', name: 'Emily Davis', sectionId: 'section3' },
+  { id: '230101021', name: 'John Doe', sectionId: 'section1' },
+  { id: '230101022', name: 'Jane Smith', sectionId: 'section1' },
+  { id: '230101023', name: 'Jim Brown', sectionId: 'section2' },
+  { id: '230101024', name: 'Emily Davis', sectionId: 'section3' }
 ];
 
 const Attendances: React.FC = () => {
