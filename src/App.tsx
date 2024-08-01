@@ -37,6 +37,10 @@ import MessageBackend from './Admin/Settings/MessageBackend';
 import MissionDataInput from './Admin/Settings/MissionDataInput';
 import BriefEdit from './Admin/Settings/BriefEdit';
 import MiddleMenu from './Admin/Settings/MiddleMenu';
+import Menus from './Admin/Settings/Menus';
+import ViewPage from './ViewPage';
+import Header from './Header';
+import Footer from './Footer';
 
 function App() {
   return (
@@ -69,6 +73,7 @@ function App() {
         <Route path="/admin/settings/brief-edit" element={<AdminLayout><BriefEdit/></AdminLayout>} />
         <Route path="/admin/settings/middle-menu" element={<AdminLayout><MiddleMenu/></AdminLayout>} />
         <Route path="/admin/settings/school-info" element={<AdminLayout><SchoolInfo/></AdminLayout>} />
+        <Route path="/admin/settings/menus" element={<AdminLayout><Menus/></AdminLayout>} />
 
         <Route path="/admin/events" element={<AdminLayout><Events/></AdminLayout>} />
         <Route path="/admin/add-event" element={<AdminLayout><AddEventPage/></AdminLayout>} />
@@ -83,6 +88,13 @@ function App() {
         <Route path="/admin/subjects" element={<AdminLayout><Subjects/></AdminLayout>} />
 
         <Route path="*" element={<NotFound />} /> {/* Optional */}
+        <Route path="/pages/:slug" element={<>
+          <Header/>
+          <ViewPage />
+          <Footer/>
+          </>
+          } /> {/* Optional */}
+
       </Routes>
     </Router>
   );

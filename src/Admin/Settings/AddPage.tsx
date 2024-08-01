@@ -11,16 +11,28 @@ import {
   Stack,
 } from '@chakra-ui/react';
 import MarkdownEditor from 'react-markdown-editor-lite';
-import 'react-markdown-editor-lite/lib/index.css'; // Import Markdown editor styles
-import MarkdownIt from 'markdown-it'; // For rendering Markdown to HTML
+import 'react-markdown-editor-lite/lib/index.css';
+import MarkdownIt from 'markdown-it';
 import { SettingMenu } from './Settings';
-
+import { API_BASE_URL } from '../../API';
 const mdParser = new MarkdownIt();
 
-// Simulated upload functions
 const uploadImage = async (file: File): Promise<{ url: string }> => {
-  const imageUrl = URL.createObjectURL(file); // Replace with actual upload logic
-  return { url: imageUrl };
+  // Replace with actual upload logic
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const response = await fetch('http://localhost:4000/pages/upload', {
+    method: 'POST',
+    body: formData,
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to upload image');
+  }
+
+  const data = await response.json();
+  return { url: API_BASE_URL+data.url };
 };
 
 const AddPage: React.FC = () => {
@@ -49,18 +61,48 @@ const AddPage: React.FC = () => {
     }
   };
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (title.trim() && slug.trim() && content.trim()) {
-      toast({
-        title: 'Page added.',
-        description: `The page "${title}" has been added.`,
-        status: 'success',
-        duration: 5000,
-        isClosable: true,
-      });
-      setTitle('');
-      setSlug('');
-      setContent('');
+      setUploading(true);
+      try {
+        const response = await fetch('http://localhost:4000/pages/add', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            title,
+            slug,
+            content,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to add page');
+        }
+
+        toast({
+          title: 'Page added.',
+          description: `The page "${title}" has been added.`,
+          status: 'success',
+          duration: 5000,
+          isClosable: true,
+        });
+
+        setTitle('');
+        setSlug('');
+        setContent('');
+      } catch (error) {
+        toast({
+          title: 'Add Error',
+          description: 'Failed to add the page.',
+          status: 'error',
+          duration: 5000,
+          isClosable: true,
+        });
+      } finally {
+        setUploading(false);
+      }
     } else {
       toast({
         title: 'Input Error',
@@ -74,7 +116,7 @@ const AddPage: React.FC = () => {
 
   return (
     <Container maxW="container" py={6}>
-      <SettingMenu/>
+      <SettingMenu />
       <Heading size="lg" mb={6}>Add New Page</Heading>
       <Box bg="white" p={6} borderRadius="md" boxShadow="md">
         <Stack spacing={4}>
@@ -105,7 +147,7 @@ const AddPage: React.FC = () => {
             />
           </FormControl>
           <Button colorScheme="teal" onClick={handleAdd} isDisabled={uploading}>
-            Add Page
+            {uploading ? 'Adding...' : 'Add Page'}
           </Button>
         </Stack>
       </Box>

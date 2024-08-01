@@ -27,24 +27,10 @@ export const SettingMenu: React.FC = () => {
                 </Button>
                 <Button
                     size="md"
-                    colorScheme={location.pathname === "/admin/settings/top-menu" ? buttonColor : inactiveButtonColor}
-                    onClick={() => handleNavigation("/admin/settings/top-menu")}
+                    colorScheme={location.pathname === "/admin/settings/menus" ? buttonColor : inactiveButtonColor}
+                    onClick={() => handleNavigation("/admin/settings/menus")}
                 >
                     Top Menu
-                </Button>
-                <Button
-                    size="md"
-                    colorScheme={location.pathname === "/admin/settings/middle-menu" ? buttonColor : inactiveButtonColor}
-                    onClick={() => handleNavigation("/admin/settings/middle-menu")}
-                >
-                    Middle Menu
-                </Button>
-                <Button
-                    size="md"
-                    colorScheme={location.pathname === "/admin/settings/bottom-menu" ? buttonColor : inactiveButtonColor}
-                    onClick={() => handleNavigation("/admin/settings/bottom-menu")}
-                >
-                    Bottom Menu
                 </Button>
                 <Button
                     size="md"

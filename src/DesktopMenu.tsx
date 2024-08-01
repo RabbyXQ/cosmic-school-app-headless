@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   HStack,
@@ -8,74 +8,79 @@ import {
   MenuList,
   MenuItem,
   Flex,
-  useColorModeValue,
-  Box,
-  Icon,
-  useDisclosure,
-  Collapse
+  Collapse,
+  useColorModeValue
 } from '@chakra-ui/react';
-import { ChevronDownIcon, ChevronUpIcon } from '@chakra-ui/icons';
-import { title } from 'process';
+import { ChevronDownIcon } from '@chakra-ui/icons';
+import axios from 'axios';
+import { API_BASE_URL } from './API';
 
-// JSON data for navigation
-const navItems = [
-  {
-    title: "প্রতিষ্ঠান সম্পর্কিত",
-    items: [
-      { label: "প্রতিষ্ঠান সম্পর্কে", link: "/about-institution/about-school/" },
-      { label: "ভবন ও কক্ষ", link: "/about-institution/about-building/" },
-      { label: "ভূমির তথ্য", link: "/about-institution/about-land/" },
-      { label: "ক্যাম্পাস ম্যাপ", link: "/about-institution/campus-map/" }
-    ]
-  },
-  {
-    title: "প্রশাসনিক তথ্য",
-    items: [
-      { label: "প্রধান শিক্ষকের তালিকা", link: "/adminstration-info/list-of-headmasters/" },
-      { label: "শিক্ষক-শিক্ষিকাদের তালিকা", link: "/teachers/" },
-      { label: "কর্মচারীদের তালিকা", link: "/adminstration-info/workers/" },
-      { label: "কমিটি মেম্বার", link: "/adminstration-info/committee/" },
-      { label: "প্রতিষ্ঠাতা ও দানকারীর তথ্য", link: "/adminstration-info/land-doner/" }
-    ]
-  },
-  {
-    title: "একাডেমিক তথ্য",
-    items: [
-      { label: "শিক্ষার্থীদের তালিকা", link: "/students/" },
-      { label: "নোটিশ বোর্ড", link: "/notices/" },
-      { label: "সিলেবাস", link: "/academic-info/syllabus/" },
-      { label: "ক্লাশ রুটিন", link: "/academic-info/class-routine/" },
-      { label: "পরিক্ষার রুটিন", link: "/academic-info/exam-routine/" },
-      { label: "পরীক্ষার আসন পরিকল্পনা", link: "/academic-info/exam-seat-management/" },
-      { label: "পরীক্ষার ফলাফল", link: "/academic-info/exam-result/" },
-      { label: "বোর্ড পরীক্ষার ফলাফল", link: "/academic-info/board-exam-result/" },
-      { label: "ছুটির তালিকা", link: "/academic-info/vacation-list/" }
-    ]
-  },
-  {
-    title: "ডাউনলোড",
-    items: [
-      { label: "বই", link: "/downloads/book" },
-      { label: "এসাইনমেন্ট", link: "/downloads/assignments" },
-      { label: "নোট", link: "/downloads/note" },
-      { label: "অন্যান্য", link: "/downloads/others" }
-    ]
-  },
-  {
-    title: "ড্যাশবোর্ড",
-    items: [
-        {
-            label: "লগইন", link: "/login"
-        },
-        {
-            label: "রেজিস্টার", link: "/register"
-        },
-    ]
+type Section = {
+  section_id: number;
+  section_type: string;
+  section_name: string;
+  section_value: string;
+};
+
+type Menu = {
+  menu_id: number;
+  menu_name: string;
+  sections: Section[];
+};
+
+type MenuType = {
+  menu_type: string;
+  menus: Menu[];
+};
+
+type NavItem = {
+  title: string;
+  items: { label: string; link: string }[]; // Ensure link is a string here
+};
+
+
+const fetchNavItems = async () => {
+  try {
+    const response = await axios.get(API_BASE_URL+'/menus/sections/grouped');
+    const data: MenuType[] = response.data;
+    
+    const navItems: NavItem[] = data
+      .filter(menuType => menuType.menu_type === 'top')
+      .flatMap(menuType =>
+        menuType.menus.map(menu => ({
+          title: menu.menu_name,
+          items: menu.sections
+            .map(section => ({
+              label: section.section_name,
+              link: section.section_type === 'page'
+                ? `/pages/${section.section_value}`
+                : section.section_type === 'link'
+                  ? section.section_value
+                  : ''
+            }))
+            .filter(item => item.link) // Ensure only valid links are included
+        }))
+      );
+
+    return navItems;
+  } catch (error) {
+    console.error('Error fetching data:', error);
+    return [];
   }
-];
+};
 
 const DesktopMenu: React.FC = () => {
+  const [navItems, setNavItems] = useState<NavItem[]>([]);
   const location = useLocation();
+
+  useEffect(() => {
+    const getNavItems = async () => {
+      const items = await fetchNavItems();
+      setNavItems(items);
+    };
+
+    getNavItems();
+  }, []);
 
   const isActive = (path: string) => {
     return location.pathname === path ? { bg: 'teal.100', color: 'teal.600' } : {};
