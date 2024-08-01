@@ -15,6 +15,7 @@ import NoticeBoard from './NoticeBoard';
 import News from './News';
 import Events from './Events';
 import { mission } from './mocks/mission';
+import MidMenu from './Mission';
 
 
 function Home() {
@@ -26,7 +27,7 @@ function Home() {
       
       <Box maxW="container">
         <SliderComponent/>
-        <Mission items={mission}/>
+        <MidMenu/>
         <Update/>
         <Brief/>
         <Grid
@@ -34,7 +35,7 @@ function Home() {
         gap={2}
       >
         <Box>
-         <NoticeBoard/>
+         <NoticeBoard showPaging={false} showAll={true} pageSize={7}/>
         </Box>
         <Box>
         <SearchWithGoogle/>

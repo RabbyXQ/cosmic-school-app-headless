@@ -41,6 +41,7 @@ import Menus from './Admin/Settings/Menus';
 import ViewPage from './ViewPage';
 import Header from './Header';
 import Footer from './Footer';
+import NoticeBoard from './NoticeBoard';
 
 function App() {
   return (
@@ -53,8 +54,8 @@ function App() {
         <Route path="/admin/sections" element={<AdminLayout><Sections/></AdminLayout>} />
         <Route path="/admin/employees" element={<AdminLayout><Employees/></AdminLayout>} />
         <Route path="/admin/notices" element={<AdminLayout><Notices/></AdminLayout>} />
-        <Route path="/admin/add-notice" element={<AdminLayout><AddNoticePage/></AdminLayout>} />
-        <Route path="/admin/edit-notice/:id" element={<AdminLayout><EditNoticePage/></AdminLayout>} />
+        <Route path="/admin/notices/add-notice" element={<AdminLayout><AddNoticePage/></AdminLayout>} />
+        <Route path="/admin/notices/edit-notice/:id" element={<AdminLayout><EditNoticePage/></AdminLayout>} />
         <Route path="/admin/news" element={<AdminLayout><News/></AdminLayout>} />
         <Route path="/admin/add-news" element={<AdminLayout><AddNewsPage/></AdminLayout>} />
         <Route path="/admin/edit-news/:id" element={<AdminLayout><EditNewsPage/></AdminLayout>} />
@@ -93,7 +94,14 @@ function App() {
           <ViewPage />
           <Footer/>
           </>
-          } /> {/* Optional */}
+          } />
+
+          <Route path="/notices/" element={<>
+          <Header/>
+          <NoticeBoard showPaging={true} showAll={false} pageSize={5} />
+          <Footer/>
+          </>
+          } />  
 
       </Routes>
     </Router>

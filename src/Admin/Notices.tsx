@@ -1,5 +1,4 @@
-// src/pages/Notices.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Container,
@@ -11,75 +10,142 @@ import {
   Select,
   HStack,
   Checkbox,
+  Spinner,
+  useToast
 } from '@chakra-ui/react';
 import { Link } from 'react-router-dom';
+import { API_BASE_URL } from '../API';
 
-const initialNotices = [
-  { id: 1, title: 'Important Update', content: '<p>This is an <strong>important</strong> update!</p>' },
-  { id: 2, title: 'Reminder', content: '<ul><li>Don\'t forget the meeting tomorrow.</li><li>Check your email for details.</li></ul>' },
-  { id: 3, title: 'Event Announcement', content: '<p>We have an upcoming event.</p>' },
-  { id: 4, title: 'Holiday Notice', content: '<p>We will have a holiday on Friday.</p>' },
-  { id: 5, title: 'Policy Update', content: '<p>New policy changes have been implemented.</p>' },
-  { id: 6, title: 'Meeting Minutes', content: '<p>Here are the minutes of the last meeting.</p>' },
-  { id: 7, title: 'Safety Guidelines', content: '<p>Updated safety guidelines.</p>' },
-  { id: 8, title: 'Project Update', content: '<p>Project progress update.</p>' },
-  { id: 9, title: 'Training Session', content: '<p>Details about the training session.</p>' },
-  { id: 10, title: 'New Joinee', content: '<p>Welcome to our new team member.</p>' },
-];
+interface Page {
+  id: number;
+  title: string;
+}
+
+interface PaginatedResponse {
+  totalItems: number;
+  totalPages: number;
+  currentPage: number;
+  items: Page[];
+}
 
 const Notices: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(5);
-  const [notices, setNotices] = useState(initialNotices);
   const [selectedNotices, setSelectedNotices] = useState<number[]>([]);
+  const [noticesData, setNoticesData] = useState<PaginatedResponse | null>(null);
+  const [loading, setLoading] = useState(false);
+  const toast = useToast();
 
-  const handleDelete = (ids: number[]) => {
-    setNotices(notices.filter(notice => !ids.includes(notice.id)));
-    setSelectedNotices([]);
+  useEffect(() => {
+    fetchNotices();
+  }, [currentPage, itemsPerPage, searchQuery]);
+
+  const fetchNotices = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(API_BASE_URL + `/notices?page=${currentPage}&limit=${itemsPerPage}`);
+      const data: PaginatedResponse = await response.json();
+      setNoticesData(data);
+    } catch (error) {
+      console.error('Error fetching Notices:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleSelectNotice = (id: number) => {
+  const handleSelectPage = (id: number) => {
     setSelectedNotices(prevSelected =>
       prevSelected.includes(id)
-        ? prevSelected.filter(noticeId => noticeId !== id)
+        ? prevSelected.filter(pageId => pageId !== id)
         : [...prevSelected, id]
     );
   };
 
   const handleSelectAll = () => {
-    if (selectedNotices.length === filteredNotices.length) {
+    if (noticesData?.items?.length === selectedNotices.length) {
       setSelectedNotices([]);
     } else {
-      setSelectedNotices(filteredNotices.map(notice => notice.id));
+      setSelectedNotices(noticesData?.items.map(page => page.id) || []);
     }
   };
 
-  const filteredNotices = notices.filter(notice =>
-    notice.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const handleDelete = async (ids: number[]) => {
+    if (ids.length === 0) return;
 
-  const totalPages = Math.ceil(filteredNotices.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const currentNotices = filteredNotices.slice(startIndex, startIndex + itemsPerPage);
+    try {
+      const deletePromises = ids.map(id =>
+        fetch(API_BASE_URL + `/notices/${id}`, {
+          method: 'DELETE',
+        })
+      );
+
+      await Promise.all(deletePromises);
+
+      toast({
+        title: 'Notices deleted.',
+        description: `Successfully deleted ${ids.length} notice(s).`,
+        status: 'success',
+        duration: 5000,
+        isClosable: true,
+      });
+      setSelectedNotices([]);
+      fetchNotices(); // Refresh the page list
+    } catch (error) {
+      toast({
+        title: 'Delete Error',
+        description: 'Failed to delete Notices.',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+    }
+  };
+
+  if (loading) {
+    return (
+      <Container maxW="container.lg" py={6}>
+        <Flex justify="center" align="center" height="100vh">
+          <Spinner size="xl" />
+        </Flex>
+      </Container>
+    );
+  }
+
+  if (!noticesData || noticesData.items.length === 0) {
+    return (
+      <Container maxW="container" py={6}>
+        <Flex justify="space-between" mb={4}>
+          <Text fontSize="2xl" fontWeight="bold">Notices Overview</Text>
+          <Link to="/admin/notices/add-notice">
+            <Button colorScheme="teal">Add Notice</Button>
+          </Link>
+        </Flex>
+        <Text>No Notices found.</Text>
+      </Container>
+    );
+  }
 
   return (
-    <Container maxW="container.md" py={6}>
+    <Container maxW="container" py={4}>
       <Flex justify="space-between" mb={4}>
-        <Text fontSize="2xl" fontWeight="bold">Notices</Text>
-        <Link to="/admin/add-notice">
+        <Text fontSize="2xl" fontWeight="bold">Notices Overview</Text>
+        <Link to="/admin/notices/add-notice">
           <Button colorScheme="teal">Add Notice</Button>
         </Link>
       </Flex>
       <Box mb={4}>
         <Input
-          placeholder="Search notices..."
+          placeholder="Search Notices..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
       </Box>
       <Flex justify="space-between" mb={4}>
-        <Checkbox isChecked={selectedNotices.length === filteredNotices.length} onChange={handleSelectAll}>
+        <Checkbox
+          isChecked={selectedNotices.length === noticesData.items.length}
+          onChange={handleSelectAll}
+        >
           Select All
         </Checkbox>
         {selectedNotices.length > 0 && (
@@ -89,24 +155,26 @@ const Notices: React.FC = () => {
         )}
       </Flex>
       <Stack spacing={4}>
-        {currentNotices.map(notice => (
-          <Box key={notice.id} p={4} borderWidth={1} borderRadius="md" boxShadow="md">
+        {noticesData.items.map(page => (
+          <Box key={page.id} p={4} borderWidth={1} borderRadius="md" boxShadow="md">
             <Flex justify="space-between" mb={2}>
               <HStack>
                 <Checkbox
-                  isChecked={selectedNotices.includes(notice.id)}
-                  onChange={() => handleSelectNotice(notice.id)}
+                  isChecked={selectedNotices.includes(page.id)}
+                  onChange={() => handleSelectPage(page.id)}
                 />
-                <Text fontSize="xl" fontWeight="bold">{notice.title}</Text>
+                <Text fontSize="xl" fontWeight="bold">
+                  {page.title}
+                </Text>
               </HStack>
               <HStack spacing={2}>
-                <Link to={`/admin/edit-notice/${notice.id}`}>
+                <Link to={`/admin/notices/edit-notice/${page.id}`}>
                   <Button size="sm" colorScheme="teal">Edit</Button>
                 </Link>
                 <Button
                   size="sm"
                   colorScheme="red"
-                  onClick={() => handleDelete([notice.id])}
+                  onClick={() => handleDelete([page.id])}
                 >
                   Delete
                 </Button>
@@ -124,11 +192,11 @@ const Notices: React.FC = () => {
             Previous
           </Button>
           <Text>
-            Page {currentPage} of {totalPages}
+            Page {noticesData.currentPage} of {noticesData.totalPages}
           </Text>
           <Button
-            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-            disabled={currentPage === totalPages}
+            onClick={() => setCurrentPage(prev => Math.min(prev + 1, noticesData.totalPages))}
+            disabled={currentPage === noticesData.totalPages}
           >
             Next
           </Button>

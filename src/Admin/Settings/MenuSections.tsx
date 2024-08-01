@@ -72,7 +72,7 @@ const MenuSections: React.FC<MenuSectionsProps> = ({ classId }) => {
 
     const fetchPages = async () => {
       try {
-        const response = await axios.get('http://localhost:4000/pages/get-all');
+        const response = await axios.get('http://localhost:4000/pages/get-all?page=1&limit=10000');
         setPages(response.data.items); // Adjust if the response structure is different
       } catch (error) {
         setError('Error fetching pages');

@@ -1,4 +1,3 @@
-// src/pages/AddNoticePage.tsx
 import React, { useState } from 'react';
 import {
   Box,
@@ -12,16 +11,29 @@ import {
   Stack,
 } from '@chakra-ui/react';
 import MarkdownEditor from 'react-markdown-editor-lite';
-import 'react-markdown-editor-lite/lib/index.css'; // Import Markdown editor styles
-import MarkdownIt from 'markdown-it'; // For rendering Markdown to HTML
-
-// Simulated upload functions
-const uploadImage = async (file: File): Promise<{ url: string }> => {
-  const imageUrl = URL.createObjectURL(file); // Replace with actual upload logic
-  return { url: imageUrl };
-};
-
+import 'react-markdown-editor-lite/lib/index.css';
+import MarkdownIt from 'markdown-it';
+import { SettingMenu } from './Settings/Settings';
+import { API_BASE_URL } from '../API';
 const mdParser = new MarkdownIt();
+
+const uploadImage = async (file: File): Promise<{ url: string }> => {
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const response = await fetch(API_BASE_URL+'/pages/upload', {
+    method: 'POST',
+    body: formData,
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to upload image');
+  }
+
+  const data = await response.json();
+  return { url: API_BASE_URL+data.url };
+};
 
 const AddNoticePage: React.FC = () => {
   const [title, setTitle] = useState<string>('');
@@ -48,21 +60,50 @@ const AddNoticePage: React.FC = () => {
     }
   };
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (title.trim() && content.trim()) {
-      toast({
-        title: 'Notice added.',
-        description: `The notice "${title}" has been added.`,
-        status: 'success',
-        duration: 5000,
-        isClosable: true,
-      });
-      setTitle('');
-      setContent('');
+      setUploading(true);
+      try {
+        const response = await fetch(API_BASE_URL+'/notices/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            title,
+            content,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to add page');
+        }
+
+        toast({
+          title: 'Page added.',
+          description: `The page "${title}" has been added.`,
+          status: 'success',
+          duration: 5000,
+          isClosable: true,
+        });
+
+        setTitle('');
+        setContent('');
+      } catch (error) {
+        toast({
+          title: 'Add Error',
+          description: 'Failed to add the page.',
+          status: 'error',
+          duration: 5000,
+          isClosable: true,
+        });
+      } finally {
+        setUploading(false);
+      }
     } else {
       toast({
         title: 'Input Error',
-        description: 'Both title and content are required.',
+        description: 'Title, slug, and content are required.',
         status: 'error',
         duration: 5000,
         isClosable: true,
@@ -71,32 +112,31 @@ const AddNoticePage: React.FC = () => {
   };
 
   return (
-    <Container maxW="container.md" py={6}>
-      <Heading mb={6}>Add New Notice</Heading>
-      <Box bg="white" p={6} borderRadius="md" boxShadow="md">
+    <Container maxW="container" py={6}>
+      <Heading size="lg" mb={6}>Add New Notice</Heading>
+      <Box p={6} borderRadius="md" boxShadow="md">
         <Stack spacing={4}>
-          <FormControl id="notice-title" mb={4}>
+          <FormControl id="page-title" mb={4}>
             <FormLabel>Title</FormLabel>
             <Input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Enter notice title"
+              placeholder="Enter page title"
             />
           </FormControl>
-          <FormControl id="notice-content" mb={4}>
+          <FormControl id="page-content" mb={4}>
             <FormLabel>Content</FormLabel>
             <MarkdownEditor
               value={content}
               renderHTML={(text) => mdParser.render(text)}
               onChange={({ text }: { text: string }) => setContent(text)}
-              placeholder="Enter notice content"
+              placeholder="Enter page content"
               onImageUpload={handleImageUpload}
             />
           </FormControl>
           <Button colorScheme="teal" onClick={handleAdd} isDisabled={uploading}>
-            Add Notice
+            {uploading ? 'Adding...' : 'Add Page'}
           </Button>
-         
         </Stack>
       </Box>
     </Container>
