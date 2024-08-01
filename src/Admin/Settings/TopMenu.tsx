@@ -1,4 +1,5 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import axios from 'axios';
 import {
   Box,
   Container,
@@ -32,190 +33,326 @@ type Page = {
 
 type Section = {
   type: 'link' | 'page';
-  name?: string; // Only needed for 'link'
-  value: string; // For 'page', it's the slug. For 'link', it's the URL.
+  id?: number;
+  name?: string;
+  value: string;
 };
 
 type Class = {
   id: number;
+  menuType: string;
   name: string;
   sections: Section[];
 };
 
-const pages: Page[] = [
-  { title: 'Home', slug: 'home' },
-  { title: 'About Us', slug: 'about-us' },
-  { title: 'Contact', slug: 'contact' },
-];
-
-const initialClasses: Class[] = [
-  { id: 1, name: 'Class 1', sections: [] },
-  { id: 2, name: 'Class 2', sections: [] },
-  { id: 3, name: 'Class 3', sections: [] },
-];
-
 const TopMenu: React.FC = () => {
-  const [classes, setClasses] = useState<Class[]>(initialClasses);
+  const [classes, setClasses] = useState<Class[]>([]);
+  const [pages, setPages] = useState<Page[]>([]);
   const [currentClass, setCurrentClass] = useState<Class | null>(null);
   const [newClassName, setNewClassName] = useState<string>('');
-  const [newSection, setNewSection] = useState<Section>({ type: 'page', value: '' });
+  const [newSection, setNewSection] = useState<Section>({ type: 'page', value: '', id: 0 });
   const [isClassModalOpen, setIsClassModalOpen] = useState<boolean>(false);
   const [isSectionModalOpen, setIsSectionModalOpen] = useState<boolean>(false);
+  const [isEditingClass, setIsEditingClass] = useState<boolean>(false);
+  const [isEditingSection, setIsEditingSection] = useState<boolean>(false);
   const cancelRef = useRef<HTMLButtonElement>(null);
   const toast = useToast();
 
-  const handleAddClass = () => {
-    setNewClassName('');
-    setIsClassModalOpen(true);
-  };
+  useEffect(() => {
+    const fetchClasses = async () => {
+      try {
+        const response = await axios.get('http://localhost:4000/menus/classes');
+        setClasses(response.data);
+      } catch (err) {
+        console.error('Failed to fetch classes', err);
+        toast({
+          title: 'Error',
+          description: 'Failed to fetch classes.',
+          status: 'error',
+          duration: 3000,
+          isClosable: true,
+        });
+      }
+    };
 
-  const handleSaveClass = () => {
+    const fetchPages = async () => {
+      try {
+        const response = await axios.get('http://localhost:4000/menus/sections/grouped');
+        setPages(response.data);
+      } catch (err) {
+        console.error('Failed to fetch pages', err);
+        toast({
+          title: 'Error',
+          description: 'Failed to fetch pages.',
+          status: 'error',
+          duration: 3000,
+          isClosable: true,
+        });
+      }
+    };
+
+    fetchClasses();
+    fetchPages();
+  }, [toast]);
+
+  const handleSaveClass = async () => {
     if (newClassName.trim()) {
-      const newClass: Class = { id: Date.now(), name: newClassName, sections: [] };
-      setClasses([...classes, newClass]);
-      setIsClassModalOpen(false);
+      try {
+        if (isEditingClass && currentClass) {
+          await axios.put(`http://localhost:4000/menus/classes/${currentClass.id}`, { name: newClassName });
+          setClasses((prevClasses) =>
+            prevClasses.map((cls) =>
+              cls.id === currentClass.id ? { ...cls, name: newClassName } : cls
+            )
+          );
+          toast({
+            title: 'Class Updated',
+            description: `Class "${newClassName}" updated successfully.`,
+            status: 'success',
+            duration: 3000,
+            isClosable: true,
+          });
+        } else {
+          const response = await axios.post('http://localhost:4000/menus/classes', {
+            name: newClassName,
+            menuType: 'default',
+          });
+          setClasses((prevClasses) => [
+            ...prevClasses,
+            {
+              id: response.data.id,
+              name: newClassName,
+              menuType: 'default',
+              sections: [],
+            },
+          ]);
+          toast({
+            title: 'Class Added',
+            description: `Class "${newClassName}" added successfully.`,
+            status: 'success',
+            duration: 3000,
+            isClosable: true,
+          });
+        }
+        setIsClassModalOpen(false);
+        setNewClassName('');
+        setCurrentClass(null);
+        setIsEditingClass(false);
+      } catch (err) {
+        console.error('Failed to save class', err);
+        toast({
+          title: 'Error',
+          description: 'Failed to save class.',
+          status: 'error',
+          duration: 3000,
+          isClosable: true,
+        });
+      }
+    }
+  };
+
+  const handleDeleteClass = async (id: number) => {
+    try {
+      await axios.delete(`http://localhost:4000/menus/classes/${id}`);
+      setClasses((prevClasses) => prevClasses.filter((cls) => cls.id !== id));
       toast({
-        title: 'Class Added',
-        description: `A new class has been added.`,
+        title: 'Class Deleted',
+        description: 'Class deleted successfully.',
         status: 'success',
         duration: 3000,
         isClosable: true,
       });
-    }
-  };
-
-  const handleUpdateClass = () => {
-    if (currentClass && newClassName.trim()) {
-      setClasses((prevClasses) =>
-        prevClasses.map((cls) =>
-          cls.id === currentClass.id ? { ...cls, name: newClassName } : cls
-        )
-      );
-      setIsClassModalOpen(false);
-      setCurrentClass(null);
+    } catch (err) {
+      console.error('Failed to delete class', err);
       toast({
-        title: 'Class Updated',
-        description: `The class "${newClassName}" has been updated.`,
-        status: 'success',
+        title: 'Error',
+        description: 'Failed to delete class.',
+        status: 'error',
         duration: 3000,
         isClosable: true,
       });
     }
-  };
-
-  const handleDeleteClass = (id: number) => {
-    setClasses((prevClasses) => prevClasses.filter((cls) => cls.id !== id));
-    toast({
-      title: 'Class Deleted',
-      description: `The class has been deleted.`,
-      status: 'success',
-      duration: 3000,
-      isClosable: true,
-    });
   };
 
   const handleAddSection = (cls: Class) => {
     setCurrentClass(cls);
-    setNewSection({ type: 'page', value: '' });
+    setNewSection({ type: 'page', value: '', id: 0 });
     setIsSectionModalOpen(true);
+    setIsEditingSection(false);
   };
 
-  const handleSaveSection = () => {
+  const handleEditSection = (cls: Class, section: Section) => {
+    setCurrentClass(cls);
+    setNewSection(section);
+    setIsSectionModalOpen(true);
+    setIsEditingSection(true);
+  };
+
+  const handleSaveSection = async () => {
     if (currentClass && newSection.value) {
-      const updatedSections = [...currentClass.sections, newSection];
-      setCurrentClass({ ...currentClass, sections: updatedSections });
+      try {
+        if (isEditingSection && newSection.id) {
+          await axios.put(`http://localhost:4000/menus/sections/${newSection.id}`, newSection);
+          const updatedSections = currentClass.sections.map((sec) =>
+            sec.id === newSection.id ? newSection : sec
+          );
+          setCurrentClass({ ...currentClass, sections: updatedSections });
+          setClasses((prevClasses) =>
+            prevClasses.map((cls) =>
+              cls.id === currentClass.id ? { ...cls, sections: updatedSections } : cls
+            )
+          );
+          toast({
+            title: 'Section Updated',
+            description: 'Section updated successfully.',
+            status: 'success',
+            duration: 3000,
+            isClosable: true,
+          });
+        } else {
+          const response = await axios.post('http://localhost:4000/menus/sections', {
+            classId: currentClass.id,
+            type: newSection.type,
+            name: newSection.name,
+            value: newSection.value,
+          });
+          const updatedSections = [
+            ...currentClass.sections,
+            { ...newSection, id: response.data.id },
+          ];
+          setCurrentClass({ ...currentClass, sections: updatedSections });
+          setClasses((prevClasses) =>
+            prevClasses.map((cls) =>
+              cls.id === currentClass.id ? { ...cls, sections: updatedSections } : cls
+            )
+          );
+          toast({
+            title: 'Section Added',
+            description: 'Section added successfully.',
+            status: 'success',
+            duration: 3000,
+            isClosable: true,
+          });
+        }
+        setIsSectionModalOpen(false);
+        setNewSection({ type: 'page', value: '', id: 0 });
+        setCurrentClass(null);
+        setIsEditingSection(false);
+      } catch (err) {
+        console.error('Failed to save section', err);
+        toast({
+          title: 'Error',
+          description: 'Failed to save section.',
+          status: 'error',
+          duration: 3000,
+          isClosable: true,
+        });
+      }
+    }
+  };
+
+  const handleDeleteSection = async (classId: number, sectionId: number) => {
+    try {
+      await axios.delete(`http://localhost:4000/menus/sections/${sectionId}`);
       setClasses((prevClasses) =>
         prevClasses.map((cls) =>
-          cls.id === currentClass.id ? { ...cls, sections: updatedSections } : cls
+          cls.id === classId
+            ? { ...cls, sections: cls.sections.filter((sec) => sec.id !== sectionId) }
+            : cls
         )
       );
-      setIsSectionModalOpen(false);
-      setNewSection({ type: 'page', value: '' });
       toast({
-        title: 'Section Added',
-        description: `A new section has been added.`,
+        title: 'Section Deleted',
+        description: 'Section deleted successfully.',
         status: 'success',
+        duration: 3000,
+        isClosable: true,
+      });
+    } catch (err) {
+      console.error('Failed to delete section', err);
+      toast({
+        title: 'Error',
+        description: 'Failed to delete section.',
+        status: 'error',
         duration: 3000,
         isClosable: true,
       });
     }
   };
 
-  const handleDeleteSection = (classId: number, sectionIndex: number) => {
-    setClasses((prevClasses) =>
-      prevClasses.map((cls) =>
-        cls.id === classId
-          ? { ...cls, sections: cls.sections.filter((_, index) => index !== sectionIndex) }
-          : cls
-      )
-    );
-    toast({
-      title: 'Section Deleted',
-      description: `The section has been deleted.`,
-      status: 'success',
-      duration: 3000,
-      isClosable: true,
-    });
-  };
-
   return (
-    <Container maxW="container" py={6}>
-      <SettingMenu/>
-      <Heading size="lg" mb={2}>Menu</Heading>
-      <Button colorScheme="teal" leftIcon={<AddIcon />} onClick={handleAddClass} mb={6}>
-        Add Class
-      </Button>
+    <Container maxW="container.lg">
+      <Box mb={4}>
+        <Heading as="h1">Manage Classes and Sections</Heading>
+      </Box>
+      <Box mb={4}>
+        <Button leftIcon={<AddIcon />} colorScheme="teal" onClick={() => {
+          setIsClassModalOpen(true);
+          setIsEditingClass(false);
+          setNewClassName('');
+        }}>
+          Add Class
+        </Button>
+      </Box>
       <List spacing={3}>
         {classes.map((cls) => (
-          <ListItem key={cls.id} borderWidth={1} borderRadius="md" p={4}>
+          <ListItem key={cls.id}>
             <HStack justify="space-between">
-              <Box>{cls.name}</Box>
-              <HStack spacing={2}>
-                <IconButton
-                  icon={<AddIcon />}
-                  aria-label="Add Section"
-                  onClick={() => handleAddSection(cls)}
-                />
-                <IconButton
-                  icon={<EditIcon />}
-                  aria-label="Edit Class"
-                  onClick={() => {
-                    setCurrentClass(cls);
-                    setNewClassName(cls.name);
-                    setIsClassModalOpen(true);
-                  }}
-                />
-                <IconButton
-                  icon={<DeleteIcon />}
-                  aria-label="Delete Class"
-                  onClick={() => handleDeleteClass(cls.id)}
-                />
-              </HStack>
+              <Box>
+                <Heading as="h3" size="md">
+                  {cls.name}
+                </Heading>
+                {cls.sections && (
+                  <List spacing={1}>
+                    {cls.sections.map((sec) => (
+                      <ListItem key={sec.id}>
+                        <HStack justify="space-between">
+                          <Box>
+                            {sec.type === 'page' ? `Page: ${sec.value}` : `Link: ${sec.value}`}
+                          </Box>
+                          <Box>
+                            <IconButton
+                              aria-label="Edit section"
+                              icon={<EditIcon />}
+                              onClick={() => handleEditSection(cls, sec)}
+                            />
+                            <IconButton
+                              aria-label="Delete section"
+                              icon={<DeleteIcon />}
+                              onClick={() => handleDeleteSection(cls.id, sec.id!)}
+                              colorScheme="red"
+                            />
+                          </Box>
+                        </HStack>
+                      </ListItem>
+                    ))}
+                  </List>
+                )}
+              </Box>
+              <Button
+                leftIcon={<AddIcon />}
+                colorScheme="teal"
+                onClick={() => handleAddSection(cls)}
+              >
+                Add Section
+              </Button>
+              <IconButton
+                aria-label="Edit class"
+                icon={<EditIcon />}
+                onClick={() => {
+                  setCurrentClass(cls);
+                  setNewClassName(cls.name);
+                  setIsClassModalOpen(true);
+                  setIsEditingClass(true);
+                }}
+              />
+              <IconButton
+                aria-label="Delete class"
+                icon={<DeleteIcon />}
+                onClick={() => handleDeleteClass(cls.id)}
+                colorScheme="red"
+              />
             </HStack>
-            {cls.sections.length > 0 && (
-              <List mt={4} spacing={2}>
-                {cls.sections.map((section, index) => (
-                  <ListItem key={index} display="flex" justifyContent="space-between" alignItems="center">
-                    <Box>
-                      {section.type === 'link' ? (
-                        <a href={section.value} target="_blank" rel="noopener noreferrer">
-                          {section.name || 'Unnamed Link'}
-                        </a>
-                      ) : (
-                        <a href={`/pages/${section.value}`}>
-                          {section.name || section.value}
-                        </a>
-                      )}
-                    </Box>
-                    <IconButton
-                      icon={<DeleteIcon />}
-                      aria-label="Delete Section"
-                      onClick={() => handleDeleteSection(cls.id, index)}
-                    />
-                  </ListItem>
-                ))}
-              </List>
-            )}
           </ListItem>
         ))}
       </List>
@@ -223,10 +360,10 @@ const TopMenu: React.FC = () => {
       <Modal isOpen={isClassModalOpen} onClose={() => setIsClassModalOpen(false)}>
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader>{currentClass ? 'Edit Class' : 'Add Class'}</ModalHeader>
+          <ModalHeader>{isEditingClass ? 'Edit Class' : 'Add Class'}</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
-            <FormControl id="class-name" mb={4}>
+            <FormControl>
               <FormLabel>Class Name</FormLabel>
               <Input
                 value={newClassName}
@@ -236,11 +373,11 @@ const TopMenu: React.FC = () => {
             </FormControl>
           </ModalBody>
           <ModalFooter>
-            <Button colorScheme="teal" mr={3} onClick={currentClass ? handleUpdateClass : handleSaveClass}>
-              Save
-            </Button>
-            <Button ref={cancelRef} onClick={() => setIsClassModalOpen(false)}>
+            <Button variant="ghost" mr={3} onClick={() => setIsClassModalOpen(false)}>
               Cancel
+            </Button>
+            <Button onClick={handleSaveClass} colorScheme="blue">
+              Save
             </Button>
           </ModalFooter>
         </ModalContent>
@@ -249,28 +386,36 @@ const TopMenu: React.FC = () => {
       <Modal isOpen={isSectionModalOpen} onClose={() => setIsSectionModalOpen(false)}>
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader>Add Section</ModalHeader>
+          <ModalHeader>{isEditingSection ? 'Edit Section' : 'Add Section'}</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
-            <FormControl id="section-type" mb={2}>
+            <FormControl>
               <FormLabel>Section Type</FormLabel>
               <Select
                 value={newSection.type}
-                onChange={(e) => setNewSection({ ...newSection, type: e.target.value as 'link' | 'page' })}
+                onChange={(e) =>
+                  setNewSection((prevSection) => ({
+                    ...prevSection,
+                    type: e.target.value as 'link' | 'page',
+                  }))
+                }
               >
                 <option value="page">Page</option>
                 <option value="link">Link</option>
               </Select>
             </FormControl>
-            {newSection.type === 'page' && (
-              <FormControl id="section-value" mb={2}>
+            {newSection.type === 'page' ? (
+              <FormControl mt={4}>
                 <FormLabel>Page</FormLabel>
                 <Select
                   value={newSection.value}
-                  onChange={(e) => setNewSection({ ...newSection, value: e.target.value })}
-                > 
-                <option key={null} value="null"/>
-
+                  onChange={(e) =>
+                    setNewSection((prevSection) => ({
+                      ...prevSection,
+                      value: e.target.value,
+                    }))
+                  }
+                >
                   {pages.map((page) => (
                     <option key={page.slug} value={page.slug}>
                       {page.title}
@@ -278,34 +423,28 @@ const TopMenu: React.FC = () => {
                   ))}
                 </Select>
               </FormControl>
-            )}
-            {newSection.type === 'link' && (
-              <>
-                <FormControl id="section-name" mb={2}>
-                  <FormLabel>Link Name</FormLabel>
-                  <Input
-                    value={newSection.name || ''}
-                    onChange={(e) => setNewSection({ ...newSection, name: e.target.value })}
-                    placeholder="Enter link name"
-                  />
-                </FormControl>
-                <FormControl id="section-url" mb={2}>
-                  <FormLabel>Link URL</FormLabel>
-                  <Input
-                    value={newSection.value}
-                    onChange={(e) => setNewSection({ ...newSection, value: e.target.value })}
-                    placeholder="Enter URL"
-                  />
-                </FormControl>
-              </>
+            ) : (
+              <FormControl mt={4}>
+                <FormLabel>Link</FormLabel>
+                <Input
+                  value={newSection.value}
+                  onChange={(e) =>
+                    setNewSection((prevSection) => ({
+                      ...prevSection,
+                      value: e.target.value,
+                    }))
+                  }
+                  placeholder="Enter link URL"
+                />
+              </FormControl>
             )}
           </ModalBody>
           <ModalFooter>
-            <Button colorScheme="teal" mr={3} onClick={handleSaveSection}>
-              Save
-            </Button>
-            <Button ref={cancelRef} onClick={() => setIsSectionModalOpen(false)}>
+            <Button variant="ghost" mr={3} onClick={() => setIsSectionModalOpen(false)}>
               Cancel
+            </Button>
+            <Button onClick={handleSaveSection} colorScheme="blue">
+              Save
             </Button>
           </ModalFooter>
         </ModalContent>

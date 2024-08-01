@@ -12,85 +12,152 @@ import {
   Stack,
 } from '@chakra-ui/react';
 import { SettingMenu } from './Settings';
+import { LOGO_UPLOAD, SITE_INFO } from '../../API';
+import { API_BASE_URL } from '../../API';
 
-// Mock data for the school information
-const mockSchoolInfo = {
-  siteName: 'Sample School',
-  description: 'A sample school description',
-  email: 'info@sample.school',
-  phone: '+1234567890',
-  address: '123 Sample Street, Sample City, SC 12345',
-  logo: 'https://via.placeholder.com/150', // Placeholder logo URL
-  facebook: 'https://facebook.com/sample',
-  twitter: 'https://twitter.com/sample',
-  instagram: 'https://instagram.com/sample',
-  linkedin: 'https://linkedin.com/company/sample',
+type SchoolInfoType = {
+  site_name: string;
+  description: string;
+  email: string;
+  phone: string | null;
+  address: string | null;
+  logo: string | null;
+  facebook: string | null;
+  twitter: string | null;
+  instagram: string | null;
+  linkedin: string | null;
 };
 
-// Mock functions to simulate API calls
-const fetchSchoolInfo = async () => {
-  return new Promise<typeof mockSchoolInfo>((resolve) => {
-    setTimeout(() => resolve(mockSchoolInfo), 1000); // Simulate network delay
-  });
+// Fetch school information
+const fetchSchoolInfo = async (): Promise<SchoolInfoType> => {
+  try {
+    const response = await fetch(SITE_INFO, {
+      method: 'GET',
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'An unknown error occurred';
+    console.error('Fetch Error:', message);
+    throw new Error(message);
+  }
 };
 
-const saveSchoolInfo = async (info: typeof mockSchoolInfo) => {
-  return new Promise<void>((resolve) => {
-    setTimeout(() => {
-      console.log('Saved data:', info); // Simulate saving data
-      resolve();
-    }, 1000); // Simulate network delay
-  });
+// Save school information
+const saveSchoolInfo = async (info: SchoolInfoType) => {
+  try {
+    const response = await fetch(SITE_INFO, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(info),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'An unknown error occurred';
+    console.error('Save Error:', message);
+    throw new Error(message);
+  }
 };
 
-const uploadImage = async (file: File): Promise<{ url: string }> => {
-  const imageUrl = URL.createObjectURL(file); // Simulate image upload
-  return { url: imageUrl };
+// Upload logo image
+const uploadImage = async (file: File): Promise<string> => {
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await fetch(LOGO_UPLOAD, {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const data = await response.json();
+    
+    if (!data.status) {
+      throw new Error('Upload failed.');
+    }
+
+    return data.url;
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'An unknown error occurred';
+    console.error('Upload Error:', message);
+    throw new Error(message);
+  }
 };
 
 const SchoolInfo: React.FC = () => {
   const [siteName, setSiteName] = useState<string>('');
   const [description, setDescription] = useState<string>('');
   const [email, setEmail] = useState<string>('');
-  const [phone, setPhone] = useState<string>('');
-  const [address, setAddress] = useState<string>('');
-  const [logo, setLogo] = useState<string>('');
-  const [facebook, setFacebook] = useState<string>('');
-  const [twitter, setTwitter] = useState<string>('');
-  const [instagram, setInstagram] = useState<string>('');
-  const [linkedin, setLinkedin] = useState<string>('');
+  const [phone, setPhone] = useState<string | null>(null);
+  const [address, setAddress] = useState<string | null>(null);
+  const [logo, setLogo] = useState<string | null>(null);
+  const [facebook, setFacebook] = useState<string | null>(null);
+  const [twitter, setTwitter] = useState<string | null>(null);
+  const [instagram, setInstagram] = useState<string | null>(null);
+  const [linkedin, setLinkedin] = useState<string | null>(null);
   const [uploading, setUploading] = useState<boolean>(false);
   const toast = useToast();
 
+  // Load school information on component mount
   useEffect(() => {
     const loadSchoolInfo = async () => {
-      const info = await fetchSchoolInfo();
-      setSiteName(info.siteName);
-      setDescription(info.description);
-      setEmail(info.email);
-      setPhone(info.phone);
-      setAddress(info.address);
-      setLogo(info.logo);
-      setFacebook(info.facebook);
-      setTwitter(info.twitter);
-      setInstagram(info.instagram);
-      setLinkedin(info.linkedin);
+      try {
+        const info = await fetchSchoolInfo();
+        setSiteName(info.site_name);
+        setDescription(info.description);
+        setEmail(info.email);
+        setPhone(info.phone);
+        setAddress(info.address);
+        setLogo(info.logo);
+        setFacebook(info.facebook);
+        setTwitter(info.twitter);
+        setInstagram(info.instagram);
+        setLinkedin(info.linkedin);
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Failed to load school information.';
+        toast({
+          title: 'Fetch Error',
+          description: `Failed to load school information: ${message}`,
+          status: 'error',
+          duration: 5000,
+          isClosable: true,
+        });
+      }
     };
 
     loadSchoolInfo();
-  }, []);
+  }, [toast]);
 
+  // Handle logo upload
   const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       setUploading(true);
       try {
-        const { url } = await uploadImage(file);
+        const url = await uploadImage(file);
         setLogo(url);
-      } catch (error) {
+        toast({
+          title: 'Upload Successful',
+          description: 'Logo has been uploaded successfully.',
+          status: 'success',
+          duration: 5000,
+          isClosable: true,
+        });
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Failed to upload logo.';
         toast({
           title: 'Upload Error',
-          description: 'Failed to upload logo.',
+          description: message,
           status: 'error',
           duration: 5000,
           isClosable: true,
@@ -101,11 +168,12 @@ const SchoolInfo: React.FC = () => {
     }
   };
 
+  // Handle saving school information
   const handleSave = async () => {
-    if (siteName.trim() && email.trim() && phone.trim() && address.trim()) {
+    if (siteName.trim() && email.trim() && phone && address) {
       try {
         await saveSchoolInfo({
-          siteName,
+          site_name: siteName,
           description,
           email,
           phone,
@@ -117,16 +185,17 @@ const SchoolInfo: React.FC = () => {
           linkedin,
         });
         toast({
-          title: 'Information Saved.',
+          title: 'Information Saved',
           description: 'School information has been saved successfully.',
           status: 'success',
           duration: 5000,
           isClosable: true,
         });
-      } catch (error) {
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Failed to save school information.';
         toast({
           title: 'Save Error',
-          description: 'Failed to save school information.',
+          description: message,
           status: 'error',
           duration: 5000,
           isClosable: true,
@@ -177,7 +246,7 @@ const SchoolInfo: React.FC = () => {
           <FormControl id="phone" mb={4}>
             <FormLabel>Phone</FormLabel>
             <Input
-              value={phone}
+              value={phone || ''}
               onChange={(e) => setPhone(e.target.value)}
               placeholder="Enter phone number"
             />
@@ -185,51 +254,54 @@ const SchoolInfo: React.FC = () => {
           <FormControl id="address" mb={4}>
             <FormLabel>Address</FormLabel>
             <Input
-              value={address}
+              value={address || ''}
               onChange={(e) => setAddress(e.target.value)}
               placeholder="Enter address"
             />
           </FormControl>
           <FormControl id="logo" mb={4}>
             <FormLabel>Logo</FormLabel>
-            <Input type="file" accept="image/*" onChange={handleLogoUpload} />
-            {logo && <Image src={logo} alt="Logo Preview" mt={4} />}
+            <Input
+              type="file"
+              accept="image/*"
+              onChange={handleLogoUpload}
+            />
+            {uploading && <p>Uploading...</p>}
+            {logo && <Image src={API_BASE_URL+logo} alt="Logo" boxSize="150px" />}
           </FormControl>
           <FormControl id="facebook" mb={4}>
-            <FormLabel>Facebook</FormLabel>
+            <FormLabel>Facebook URL</FormLabel>
             <Input
-              value={facebook}
+              value={facebook || ''}
               onChange={(e) => setFacebook(e.target.value)}
-              placeholder="Enter Facebook profile URL"
+              placeholder="Enter Facebook URL"
             />
           </FormControl>
           <FormControl id="twitter" mb={4}>
-            <FormLabel>Twitter</FormLabel>
+            <FormLabel>Twitter URL</FormLabel>
             <Input
-              value={twitter}
+              value={twitter || ''}
               onChange={(e) => setTwitter(e.target.value)}
-              placeholder="Enter Twitter profile URL"
+              placeholder="Enter Twitter URL"
             />
           </FormControl>
           <FormControl id="instagram" mb={4}>
-            <FormLabel>Instagram</FormLabel>
+            <FormLabel>Instagram URL</FormLabel>
             <Input
-              value={instagram}
+              value={instagram || ''}
               onChange={(e) => setInstagram(e.target.value)}
-              placeholder="Enter Instagram profile URL"
+              placeholder="Enter Instagram URL"
             />
           </FormControl>
           <FormControl id="linkedin" mb={4}>
-            <FormLabel>LinkedIn</FormLabel>
+            <FormLabel>LinkedIn URL</FormLabel>
             <Input
-              value={linkedin}
+              value={linkedin || ''}
               onChange={(e) => setLinkedin(e.target.value)}
-              placeholder="Enter LinkedIn profile URL"
+              placeholder="Enter LinkedIn URL"
             />
           </FormControl>
-          <Button colorScheme="teal" onClick={handleSave} isDisabled={uploading}>
-            Save Information
-          </Button>
+          <Button colorScheme="teal" onClick={handleSave}>Save</Button>
         </Stack>
       </Box>
     </Container>
