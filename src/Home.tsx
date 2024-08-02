@@ -12,10 +12,11 @@ import Update from './Update';
 import Brief from './Brief';
 import Message from './Message';
 import NoticeBoard from './NoticeBoard';
-import News from './News';
+import News from './NewsBoard';
 import Events from './Events';
 import { mission } from './mocks/mission';
 import MidMenu from './Mission';
+import NewsBoard from './NewsBoard';
 
 
 function Home() {
@@ -35,7 +36,7 @@ function Home() {
         gap={2}
       >
         <Box>
-         <NoticeBoard showPaging={false} showAll={true} pageSize={7}/>
+         <NoticeBoard showPaging={false} showAll={true} pageSize={5}/>
         </Box>
         <Box>
         <SearchWithGoogle/>
@@ -47,7 +48,7 @@ function Home() {
         gap={2}
       >
         <Box>
-         <News/>
+         <NewsBoard showPaging={false} showAll={true} pageSize={5}/>
         </Box>
         <Box>
         <Events/>

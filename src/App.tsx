@@ -42,6 +42,14 @@ import ViewPage from './ViewPage';
 import Header from './Header';
 import Footer from './Footer';
 import NoticeBoard from './NoticeBoard';
+import NewsBoard from './NewsBoard';
+import ViewNews from './ViewNews';
+import ViewNotice from './ViewNotice';
+import Patrons from './Admin/Patrons';
+import AddPatron from './Admin/AddPatron';
+import EditPatron from './Admin/EditPatron';
+import ViewPatron from './ViewPatrons';
+import ActivePatron from './ActivePatron';
 
 function App() {
   return (
@@ -57,7 +65,7 @@ function App() {
         <Route path="/admin/notices/add-notice" element={<AdminLayout><AddNoticePage/></AdminLayout>} />
         <Route path="/admin/notices/edit-notice/:id" element={<AdminLayout><EditNoticePage/></AdminLayout>} />
         <Route path="/admin/news" element={<AdminLayout><News/></AdminLayout>} />
-        <Route path="/admin/add-news" element={<AdminLayout><AddNewsPage/></AdminLayout>} />
+        <Route path="/admin/news/add-news" element={<AdminLayout><AddNewsPage/></AdminLayout>} />
         <Route path="/admin/edit-news/:id" element={<AdminLayout><EditNewsPage/></AdminLayout>} />
         <Route path="/admin/admissions" element={<AdminLayout><VerifyAdmission/></AdminLayout>} />
         <Route path="/admin/add-admission" element={<AdminLayout><Admission/></AdminLayout>} />
@@ -84,6 +92,10 @@ function App() {
         <Route path="/admin/attendances" element={<AdminLayout><Attendances/></AdminLayout>} />
         <Route path="/admin/students" element={<AdminLayout><Students/></AdminLayout>} />
         <Route path="/admin/routine" element={<AdminLayout><Routine/></AdminLayout>} />
+        
+        <Route path="/admin/patrons" element={<AdminLayout><Patrons/></AdminLayout>} />
+        <Route path="/admin/patrons/add-patron" element={<AdminLayout><AddPatron/></AdminLayout>} />
+        <Route path="/admin/patrons/edit-patron/:id" element={<AdminLayout><EditPatron/></AdminLayout>} />
 
 
         <Route path="/admin/subjects" element={<AdminLayout><Subjects/></AdminLayout>} />
@@ -98,10 +110,44 @@ function App() {
 
           <Route path="/notices/" element={<>
           <Header/>
-          <NoticeBoard showPaging={true} showAll={false} pageSize={5} />
+          <NoticeBoard showPaging={true} showAll={false} pageSize={10} />
+          <Footer/>
+          </>
+          } /> 
+          <Route path="/news/" element={<>
+          <Header/>
+          <NewsBoard showPaging={true} showAll={false} pageSize={10} />
           <Footer/>
           </>
           } />  
+
+          <Route path="/news/:id" element={<>
+          <Header/>
+          <ViewNews/>
+          <Footer/>
+          </>
+          } /> 
+
+          <Route path="/notices/:id" element={<>
+          <Header/>
+          <ViewNotice/>
+          <Footer/>
+          </>
+          } /> 
+
+          <Route path="/patrons/:id" element={<>
+          <Header/>
+          <ViewPatron/>
+          <Footer/>
+          </>
+          } />  
+
+          <Route path="/patrons/active/:type" element={<>
+          <Header/>
+          <ActivePatron/>
+          <Footer/>
+          </>
+          } />   
 
       </Routes>
     </Router>

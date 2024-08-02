@@ -1,5 +1,5 @@
 import { InfoOutlineIcon, SettingsIcon } from '@chakra-ui/icons';
-import { MdAddAPhoto, MdAddBox, MdBrowseGallery, MdCalendarToday, MdCategory, MdClass, MdDashboard, MdEmojiPeople, MdEvent, MdFileUpload, MdImage, MdLogout, MdNewspaper, MdNotificationAdd, MdOutlineBrowseGallery, MdPayment, MdPeople, MdSettings, MdSubject, MdSyncLock, MdTimer } from 'react-icons/md';
+import { MdAddAPhoto, MdAddBox, MdAdminPanelSettings, MdBrowseGallery, MdCalendarToday, MdCategory, MdClass, MdDashboard, MdEmojiPeople, MdEvent, MdFileUpload, MdImage, MdLogout, MdNewspaper, MdNotificationAdd, MdOutlineBrowseGallery, MdPayment, MdPeople, MdSettings, MdSubject, MdSyncLock, MdTimer } from 'react-icons/md';
 
 export const adminSidebarItems = [
   { name: 'Admissions', icon: MdAddBox, url: '/admin/admissions/' },
@@ -19,8 +19,11 @@ export const adminSidebarItems = [
   { name: 'Payments', icon: MdPayment, url: '/admin/payments/' },
 
   { name: 'Routine', icon: MdTimer, url: '/admin/routine/' },
+  { name: 'Patrons', icon: MdAdminPanelSettings, url: '/admin/patrons/'},
 
   { name: 'Students', icon: MdPeople, url: '/admin/students/' },
+
+
   { name: 'Settings', icon: MdSettings, url: '/admin/settings/' },
 
   { name: 'Logout', icon: MdLogout, url: '/admin/logout/' },

@@ -30,21 +30,7 @@ export const SettingMenu: React.FC = () => {
                     colorScheme={location.pathname === "/admin/settings/menus" ? buttonColor : inactiveButtonColor}
                     onClick={() => handleNavigation("/admin/settings/menus")}
                 >
-                    Top Menu
-                </Button>
-                <Button
-                    size="md"
-                    colorScheme={location.pathname === "/admin/settings/patron-message" ? buttonColor : inactiveButtonColor}
-                    onClick={() => handleNavigation("/admin/settings/patron-message")}
-                >
-                    Patron Messages
-                </Button>
-                <Button
-                    size="md"
-                    colorScheme={location.pathname === "/admin/settings/brief-edit" ? buttonColor : inactiveButtonColor}
-                    onClick={() => handleNavigation("/admin/settings/brief-edit")}
-                >
-                    Brief
+                    Menus
                 </Button>
                 <Button
                     size="md"

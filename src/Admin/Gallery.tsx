@@ -1,56 +1,163 @@
 import React, { useState, useEffect } from 'react';
-import { Select, Button, Box, Grid, Input, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter, useDisclosure, IconButton, FormControl, FormLabel, Checkbox, Stack } from '@chakra-ui/react';
-import { ChevronLeftIcon, ChevronRightIcon, DeleteIcon } from '@chakra-ui/icons';
+import {
+  Select,
+  Button,
+  Box,
+  Grid,
+  Input,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalCloseButton,
+  ModalBody,
+  ModalFooter,
+  useDisclosure,
+  IconButton,
+  FormControl,
+  FormLabel,
+  Text,
+  Icon,
+  HStack
+} from '@chakra-ui/react';
+import { ChevronLeftIcon, ChevronRightIcon } from '@chakra-ui/icons';
+import { API_BASE_URL } from '../API';
+import { FaClipboard, FaDownload } from 'react-icons/fa';
+import { BsPencil, BsTrash } from 'react-icons/bs';
 
-// Dummy data for galleries and photos
-const initialGalleries = [
-  { id: 1, name: 'Vacation', photos: ['photo1.jpg', 'photo2.jpg'] },
-  { id: 2, name: 'Family', photos: ['photo3.jpg'] },
-];
+const API_BASE_URL_CATEGORIES = 'http://localhost:4000/gallery/categories';
+const API_BASE_URL_ITEMS = 'http://localhost:4000/gallery/items';
+const API_UPLOAD_URL = 'http://localhost:4000/pages/upload';
 
 const Gallery: React.FC = () => {
-  const [galleries, setGalleries] = useState(initialGalleries);
+  const [galleries, setGalleries] = useState<any[]>([]);
   const [selectedGalleryId, setSelectedGalleryId] = useState<number | null>(null);
   const [newGalleryName, setNewGalleryName] = useState('');
+  const [editingGalleryName, setEditingGalleryName] = useState('');
   const [newPhoto, setNewPhoto] = useState<File | null>(null);
   const [itemsPerPage, setItemsPerPage] = useState(5);
   const [currentPage, setCurrentPage] = useState(0);
   const [selectedPhotos, setSelectedPhotos] = useState<Set<number>>(new Set());
+  const [galleryToEdit, setGalleryToEdit] = useState<number | null>(null);
+  const [galleryItems, setGalleryItems] = useState<any[]>([]);
+
   const { isOpen: isAddGalleryOpen, onOpen: onAddGalleryOpen, onClose: onAddGalleryClose } = useDisclosure();
   const { isOpen: isAddPhotoOpen, onOpen: onAddPhotoOpen, onClose: onAddPhotoClose } = useDisclosure();
+  const { isOpen: isEditGalleryOpen, onOpen: onEditGalleryOpen, onClose: onEditGalleryClose } = useDisclosure();
+  const { isOpen: isDeleteGalleryOpen, onOpen: onDeleteGalleryOpen, onClose: onDeleteGalleryClose } = useDisclosure();
+
+  useEffect(() => {
+    fetchGalleries();
+  }, []);
 
   useEffect(() => {
     if (selectedGalleryId !== null) {
-      const gallery = galleries.find(g => g.id === selectedGalleryId);
-      if (gallery) {
-        setNewPhoto(null);
-        setSelectedPhotos(new Set());
-      }
+      fetchGalleryItems(selectedGalleryId);
     }
   }, [selectedGalleryId]);
 
-  const handleAddGallery = () => {
-    const newGallery = { id: Date.now(), name: newGalleryName, photos: [] };
-    setGalleries([...galleries, newGallery]);
-    setNewGalleryName('');
-    onAddGalleryClose();
+  const fetchGalleries = async () => {
+    try {
+      const response = await fetch(API_BASE_URL_CATEGORIES);
+      const data = await response.json();
+      setGalleries(data);
+    } catch (error) {
+      console.error('Failed to fetch galleries:', error);
+    }
   };
 
-  const handleAddPhoto = () => {
+  const fetchGalleryItems = async (galleryId: number) => {
+    try {
+      const response = await fetch(`${API_BASE_URL_ITEMS}?galleryId=${galleryId}`);
+      const data = await response.json();
+      setGalleryItems(data);
+    } catch (error) {
+      console.error('Failed to fetch gallery items:', error);
+    }
+  };
+
+  const handleAddGallery = async () => {
+    try {
+      const response = await fetch(API_BASE_URL_CATEGORIES, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newGalleryName })
+      });
+      if (response.ok) {
+        fetchGalleries();
+        setNewGalleryName('');
+        onAddGalleryClose();
+      }
+    } catch (error) {
+      console.error('Failed to add gallery:', error);
+    }
+  };
+
+  const handleEditGallery = async () => {
+    if (selectedGalleryId !== null) {
+      try {
+        const response = await fetch(`${API_BASE_URL_CATEGORIES}/${selectedGalleryId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: editingGalleryName })
+        });
+        if (response.ok) {
+          fetchGalleries();
+          setEditingGalleryName('');
+          onEditGalleryClose();
+        }
+      } catch (error) {
+        console.error('Failed to edit gallery:', error);
+      }
+    }
+  };
+
+  const handleDeleteGallery = async () => {
+    if (selectedGalleryId !== null) {
+      try {
+        const response = await fetch(`${API_BASE_URL_CATEGORIES}/${selectedGalleryId}`, {
+          method: 'DELETE'
+        });
+        if (response.ok) {
+          fetchGalleries();
+          setSelectedGalleryId(null);
+          setGalleryItems([]);
+          onDeleteGalleryClose();
+        }
+      } catch (error) {
+        console.error('Failed to delete gallery:', error);
+      }
+    }
+  };
+
+  const handleAddPhoto = async () => {
     if (selectedGalleryId !== null && newPhoto) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const photoUrl = reader.result as string;
-        const updatedGalleries = galleries.map(gallery =>
-          gallery.id === selectedGalleryId
-            ? { ...gallery, photos: [...gallery.photos, photoUrl] }
-            : gallery
-        );
-        setGalleries(updatedGalleries);
-        setNewPhoto(null);
-        onAddPhotoClose();
-      };
-      reader.readAsDataURL(newPhoto);
+      const formData = new FormData();
+      formData.append('file', newPhoto);
+
+      try {
+        const response = await fetch(API_UPLOAD_URL, {
+          method: 'POST',
+          body: formData
+        });
+        const result = await response.json();
+        if (response.ok && result.url) {
+          const photoData = {
+            gallery_id: selectedGalleryId,
+            image: result.url
+          };
+          await fetch(API_BASE_URL_ITEMS, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(photoData)
+          });
+          fetchGalleryItems(selectedGalleryId);
+          setNewPhoto(null);
+          onAddPhotoClose();
+        }
+      } catch (error) {
+        console.error('Failed to add photo:', error);
+      }
     }
   };
 
@@ -63,15 +170,22 @@ const Gallery: React.FC = () => {
     setCurrentPage(0);
   };
 
-  const handleDeletePhotos = () => {
+  const handleDeletePhotos = async () => {
     if (selectedGalleryId !== null) {
-      const updatedGalleries = galleries.map(gallery =>
-        gallery.id === selectedGalleryId
-          ? { ...gallery, photos: gallery.photos.filter((_, index) => !selectedPhotos.has(index)) }
-          : gallery
-      );
-      setGalleries(updatedGalleries);
-      setSelectedPhotos(new Set());
+      const photosToDelete = Array.from(selectedPhotos);
+      try {
+        await Promise.all(
+          photosToDelete.map(photoIndex =>
+            fetch(`${API_BASE_URL_ITEMS}/${galleryItems[photoIndex].id}`, {
+              method: 'DELETE'
+            })
+          )
+        );
+        fetchGalleryItems(selectedGalleryId);
+        setSelectedPhotos(new Set());
+      } catch (error) {
+        console.error('Failed to delete photos:', error);
+      }
     }
   };
 
@@ -87,10 +201,27 @@ const Gallery: React.FC = () => {
     });
   };
 
+  const handleCopyLink = (url: string) => {
+    navigator.clipboard.writeText(url).then(() => {
+      alert('Link copied to clipboard!');
+    }).catch((error) => {
+      console.error('Failed to copy link:', error);
+    });
+  };
+
+  const handleDownload = (url: string) => {
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = url.split('/').pop() || 'photo';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const selectedGallery = selectedGalleryId !== null ? galleries.find(g => g.id === selectedGalleryId) : null;
-  const totalPhotos = selectedGallery?.photos.length || 0;
+  const totalPhotos = galleryItems.length;
   const totalPages = Math.ceil(totalPhotos / itemsPerPage);
-  const currentPhotos = selectedGallery?.photos.slice(currentPage * itemsPerPage, (currentPage + 1) * itemsPerPage) || [];
+  const currentPhotos = galleryItems.slice(currentPage * itemsPerPage, (currentPage + 1) * itemsPerPage);
 
   const handlePageChange = (page: number) => {
     if (page >= 0 && page < totalPages) {
@@ -100,63 +231,63 @@ const Gallery: React.FC = () => {
 
   return (
     <Box p={5}>
-      <Select placeholder="Select gallery" onChange={handleGalleryChange}>
+      <Select placeholder="Select gallery" onChange={handleGalleryChange} value={selectedGalleryId || ''}>
         {galleries.map(gallery => (
           <option key={gallery.id} value={gallery.id}>{gallery.name}</option>
         ))}
       </Select>
-      <Button onClick={onAddGalleryOpen} mt={4}>Add Gallery</Button>
-      <Button onClick={onAddPhotoOpen} mt={4} ml={4}>Add Photo</Button>
-      <Button onClick={handleDeletePhotos} mt={4} ml={4} colorScheme="red" isDisabled={selectedPhotos.size === 0}>Delete Selected Photos</Button>
+      <HStack mt={4}>
+        <Button onClick={onAddGalleryOpen}>Add Gallery</Button>
+        {selectedGalleryId !== null && (
+          <>
+            <Button onClick={onEditGalleryOpen} ml={4}>Edit Gallery</Button>
+            <Button onClick={onDeleteGalleryOpen} ml={4} colorScheme="red">Delete Gallery</Button>
+          </>
+        )}
+        <Button onClick={onAddPhotoOpen} ml={4}>Add Photo</Button>
+        <Button onClick={handleDeletePhotos} ml={4} colorScheme="red" isDisabled={selectedPhotos.size === 0}>Delete Selected Photos</Button>
+      </HStack>
 
       <FormControl mt={4}>
         <FormLabel>Items per page</FormLabel>
         <Select value={itemsPerPage} onChange={handleItemsPerPageChange}>
-          {[5, 10, 20].map(option => (
-            <option key={option} value={option}>{option}</option>
-          ))}
+          <option value={5}>5</option>
+          <option value={10}>10</option>
+          <option value={20}>20</option>
         </Select>
       </FormControl>
 
-      <Box mt={4}>
-        {selectedGalleryId !== null && (
-          <>
-            <Grid templateColumns="repeat(auto-fill, minmax(100px, 1fr))" gap={4}>
-              {currentPhotos.map((photo, index) => (
-                <Box key={index} position="relative" p={2} border="1px" borderRadius="md">
-                  <Checkbox
-                    position="absolute"
-                    top={2}
-                    left={2}
-                    colorScheme="teal"
-                    isChecked={selectedPhotos.has(index)}
-                    onChange={() => handleSelectPhoto(index)}
-                  />
-                  <img src={photo} alt={`Photo ${index + 1}`} width="100%" />
-                </Box>
-              ))}
-            </Grid>
-
-            <Box mt={4} display="flex" justifyContent="center" alignItems="center">
-              <IconButton
-                icon={<ChevronLeftIcon />}
-                aria-label="Previous page"
-                onClick={() => handlePageChange(currentPage - 1)}
-                isDisabled={currentPage === 0}
-              />
-              <Box mx={4}>
-                Page {currentPage + 1} of {totalPages}
+      {selectedGalleryId && (
+        <Box mt={4}>
+          <Grid templateColumns="repeat(auto-fill, minmax(150px, 1fr))" gap={4}>
+            {currentPhotos.map((photo, index) => (
+              <Box key={index} borderWidth="1px" borderRadius="md" overflow="hidden" p={2} position="relative">
+                <img src={API_BASE_URL+photo.image} alt={`Photo ${index + 1}`} width="100%" />
+                <HStack padding={2} justify="center" bottom={2} right={2}>
+                  <IconButton colorScheme='green' icon={<FaClipboard />} aria-label="Copy Link" onClick={() => handleCopyLink(`${API_BASE_URL}/${photo.image}`)} />
+                  <IconButton colorScheme='blue' icon={<FaDownload />} aria-label="Download" onClick={() => handleDownload(`${API_BASE_URL}/${photo.image}`)} />
+                  <IconButton colorScheme="red" icon={<BsTrash />} aria-label="Delete" onClick={() => handleSelectPhoto(index)} />
+                </HStack>
               </Box>
-              <IconButton
-                icon={<ChevronRightIcon />}
-                aria-label="Next page"
-                onClick={() => handlePageChange(currentPage + 1)}
-                isDisabled={currentPage === totalPages - 1}
-              />
-            </Box>
-          </>
-        )}
-      </Box>
+            ))}
+          </Grid>
+          <HStack mt={4} justifyContent="center">
+            <IconButton
+              icon={<ChevronLeftIcon />}
+              aria-label="Previous Page"
+              onClick={() => handlePageChange(currentPage - 1)}
+              isDisabled={currentPage === 0}
+            />
+            <Text>{currentPage + 1} of {totalPages}</Text>
+            <IconButton
+              icon={<ChevronRightIcon />}
+              aria-label="Next Page"
+              onClick={() => handlePageChange(currentPage + 1)}
+              isDisabled={currentPage === totalPages - 1}
+            />
+          </HStack>
+        </Box>
+      )}
 
       {/* Add Gallery Modal */}
       <Modal isOpen={isAddGalleryOpen} onClose={onAddGalleryClose}>
@@ -165,14 +296,14 @@ const Gallery: React.FC = () => {
           <ModalHeader>Add Gallery</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
-            <Input
-              placeholder="New gallery name"
-              value={newGalleryName}
-              onChange={(e) => setNewGalleryName(e.target.value)}
-            />
+            <FormControl>
+              <FormLabel>Gallery Name</FormLabel>
+              <Input value={newGalleryName} onChange={(e) => setNewGalleryName(e.target.value)} />
+            </FormControl>
           </ModalBody>
           <ModalFooter>
-            <Button colorScheme="blue" onClick={handleAddGallery}>Add Gallery</Button>
+            <Button colorScheme="blue" onClick={handleAddGallery}>Add</Button>
+            <Button variant="ghost" onClick={onAddGalleryClose}>Cancel</Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
@@ -184,18 +315,52 @@ const Gallery: React.FC = () => {
           <ModalHeader>Add Photo</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
-            <Input
-              type="file"
-              accept="image/*"
-              onChange={(e) => {
-                if (e.target.files && e.target.files[0]) {
-                  setNewPhoto(e.target.files[0]);
-                }
-              }}
-            />
+            <FormControl>
+              <FormLabel>Select Photo</FormLabel>
+              <Input type="file" onChange={(e) => setNewPhoto(e.target.files?.[0] || null)} />
+            </FormControl>
           </ModalBody>
           <ModalFooter>
-            <Button colorScheme="blue" onClick={handleAddPhoto}>Add Photo</Button>
+            <Button colorScheme="blue" onClick={handleAddPhoto}>Upload</Button>
+            <Button variant="ghost" onClick={onAddPhotoClose}>Cancel</Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      {/* Edit Gallery Modal */}
+      <Modal isOpen={isEditGalleryOpen} onClose={onEditGalleryClose}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Edit Gallery</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <FormControl>
+              <FormLabel>Gallery Name</FormLabel>
+              <Input
+                value={editingGalleryName}
+                onChange={(e) => setEditingGalleryName(e.target.value)}
+              />
+            </FormControl>
+          </ModalBody>
+          <ModalFooter>
+            <Button colorScheme="blue" onClick={handleEditGallery}>Save</Button>
+            <Button variant="ghost" onClick={onEditGalleryClose}>Cancel</Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      {/* Delete Gallery Modal */}
+      <Modal isOpen={isDeleteGalleryOpen} onClose={onDeleteGalleryClose}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Delete Gallery</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <Text>Are you sure you want to delete this gallery?</Text>
+          </ModalBody>
+          <ModalFooter>
+            <Button colorScheme="red" onClick={handleDeleteGallery}>Delete</Button>
+            <Button variant="ghost" onClick={onDeleteGalleryClose}>Cancel</Button>
           </ModalFooter>
         </ModalContent>
       </Modal>

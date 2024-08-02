@@ -14,24 +14,24 @@ import {
   useColorModeValue,
   Link as ChakraLink,
   Heading,
-  Icon,
+  Tag,
 } from '@chakra-ui/react';
 import { Link } from 'react-router-dom';
 import { API_BASE_URL } from './API';
-import { FaArrowRight } from 'react-icons/fa';
 import { MdNotifications } from 'react-icons/md';
 
-const arrowColor = (id: number) => {
-  if (id % 6 === 0) return 'green.500';
-  if (id % 2 === 0) return 'blue.500';
-  if (id % 3 === 0) return 'yellow.500';
-  if (id % 4 === 0) return 'gray.500';
-  if (id % 5 === 0) return 'orange.500';
-  return 'red.500';
+const getDateColor = (id: number) => {
+  if (id % 6 === 0) return 'green.200';
+  if (id % 2 === 0) return 'blue.200';
+  if (id % 3 === 0) return 'yellow.200';
+  if (id % 4 === 0) return 'gray.200';
+  if (id % 5 === 0) return 'orange.200';
+  return 'red.200';
 };
 
-interface Notice {
+interface News {
   id: number;
+  news_date: string; // Changed to string for API compatibility
   title: string;
 }
 
@@ -39,16 +39,16 @@ interface PaginatedResponse {
   totalItems: number;
   totalPages: number;
   currentPage: number;
-  items: Notice[];
+  items: News[];
 }
 
-interface NoticeBoardProps {
+interface NewsBoardProps {
   showPaging: boolean;
   showAll: boolean;
   pageSize?: number;
 }
 
-const NoticeBoard: React.FC<NoticeBoardProps> = ({
+const NewsBoard: React.FC<NewsBoardProps> = ({
   showPaging,
   showAll,
   pageSize = 10,
@@ -56,8 +56,8 @@ const NoticeBoard: React.FC<NoticeBoardProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(pageSize);
-  const [noticesData, setNoticesData] = useState<PaginatedResponse | null>(null);
-  const [filteredNotices, setFilteredNotices] = useState<Notice[]>([]);
+  const [newsData, setNewsData] = useState<PaginatedResponse | null>(null);
+  const [filteredNews, setFilteredNews] = useState<News[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const toast = useToast();
@@ -69,24 +69,24 @@ const NoticeBoard: React.FC<NoticeBoardProps> = ({
   const cardBgColor = useColorModeValue('white.50', 'gray.900');
 
   useEffect(() => {
-    const fetchNotices = async () => {
+    const fetchNews = async () => {
       setLoading(true);
       try {
         const response = await fetch(
-          `${API_BASE_URL}/notices?page=${currentPage}&limit=${itemsPerPage}`
+          `${API_BASE_URL}/news?page=${currentPage}&limit=${itemsPerPage}`
         );
         if (!response.ok) {
           throw new Error('Network response was not ok');
         }
         const data: PaginatedResponse = await response.json();
-        setNoticesData(data);
-        setFilteredNotices(data.items); // Initialize filtered notices
+        setNewsData(data);
+        setFilteredNews(data.items); // Initialize filtered news
       } catch (error) {
-        setError('Failed to fetch notices');
-        console.error('Error fetching notices:', error);
+        setError('Failed to fetch news');
+        console.error('Error fetching news:', error);
         toast({
           title: 'Fetch Error',
-          description: 'Failed to fetch notices.',
+          description: 'Failed to fetch news.',
           status: 'error',
           duration: 5000,
           isClosable: true,
@@ -96,17 +96,17 @@ const NoticeBoard: React.FC<NoticeBoardProps> = ({
       }
     };
 
-    fetchNotices();
+    fetchNews();
   }, [currentPage, itemsPerPage]);
 
   useEffect(() => {
-    if (noticesData) {
-      const filtered = noticesData.items.filter(notice =>
-        notice.title.toLowerCase().includes(searchQuery.toLowerCase())
+    if (newsData) {
+      const filtered = newsData.items.filter(news =>
+        news.title.toLowerCase().includes(searchQuery.toLowerCase())
       );
-      setFilteredNotices(filtered);
+      setFilteredNews(filtered);
     }
-  }, [searchQuery, noticesData]);
+  }, [searchQuery, newsData]);
 
   if (loading) {
     return (
@@ -128,49 +128,51 @@ const NoticeBoard: React.FC<NoticeBoardProps> = ({
     );
   }
 
-  
-
   return (
     <Container maxW="container.lg" py={4}>
       <Flex justify="space-between" mb={4}>
         <Heading as="h5" size="md" color={textColor} display="flex" alignItems="center">
           <MdNotifications />
-          Notices
-        </Heading>        
+          News
+        </Heading>
         {showAll && (
-          <Link to="/notices">
+          <Link to="/news">
             <ChakraLink fontWeight="bold" color={linkColor} fontSize="md">
               Show All
             </ChakraLink>
           </Link>
         )}
       </Flex>
-      {(showPaging) && (<Box mb={4}>
-        <Input
-          placeholder="Search notices..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-      </Box>)}
-      <Stack spacing={4}>
-        {filteredNotices.map(notice => (
+      {showPaging && (
+        <Box mb={4}>
+          <Input
+            placeholder="Search news..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </Box>
+      )}
+      <Stack spacing={1}>
+        {filteredNews.map(news => (
           <Box
-            key={notice.id}
+            key={news.id}
             p={4}
             borderRadius="md"
             borderWidth={1}
             borderColor={borderColor}
             bg={cardBgColor}
           >
-            <Flex direction="row" align="center">
-              <Icon mx="3" as={FaArrowRight} color={arrowColor(notice.id)} />
+            <Flex direction="row" align="center" mb={2}>
+              <Tag bg={getDateColor(news.id)} variant="solid" mr={1}>
+                {new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' }).format(new Date(news.news_date))}
+              </Tag>
               <Text fontSize="lg" fontWeight="bold">
-                <Link to={`/notices/${notice.id}`}>
+                <Link to={`/news/${news.id}`}>
                   <ChakraLink
                     color={linkColor}
                     _hover={{ textDecoration: 'underline' }}
                   >
-                    {notice.title}
+                    {news.title}
                   </ChakraLink>
                 </Link>
               </Text>
@@ -178,7 +180,7 @@ const NoticeBoard: React.FC<NoticeBoardProps> = ({
           </Box>
         ))}
       </Stack>
-      {showPaging  && (
+      {showPaging && (
         <Flex justify="space-between" align="center" mt={4}>
           <HStack>
             <Button
@@ -187,14 +189,18 @@ const NoticeBoard: React.FC<NoticeBoardProps> = ({
             >
               Previous
             </Button>
-            {noticesData && (<Text>
-              Page {noticesData.currentPage} of {noticesData.totalPages}
-            </Text>)}
-           {noticesData && (<Button
-              onClick={() => setCurrentPage(prev => Math.min(prev + 1, noticesData.totalPages))}
-            >
-              Next
-            </Button>)}
+            {newsData && (
+              <Text>
+                Page {newsData.currentPage} of {newsData.totalPages}
+              </Text>
+            )}
+            {newsData && (
+              <Button
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, newsData.totalPages))}
+              >
+                Next
+              </Button>
+            )}
           </HStack>
           <Select
             width="auto"
@@ -211,4 +217,4 @@ const NoticeBoard: React.FC<NoticeBoardProps> = ({
   );
 };
 
-export default NoticeBoard;
+export default NewsBoard;

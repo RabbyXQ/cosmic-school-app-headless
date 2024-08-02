@@ -16,58 +16,59 @@ import {
 import { Link } from 'react-router-dom';
 import { API_BASE_URL } from '../API';
 
-interface News {
+interface Patron {
   id: number;
-  title: string;
-  news_date: string; // Added news_date field
+  type: string;
+  name: string;
+  content: string;
 }
 
 interface PaginatedResponse {
   totalItems: number;
   totalPages: number;
   currentPage: number;
-  items: News[];
+  items: Patron[];
 }
 
-const News: React.FC = () => {
+const Patrons: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(5);
-  const [selectedNews, setSelectedNews] = useState<number[]>([]);
-  const [newsData, setNewsData] = useState<PaginatedResponse | null>(null);
+  const [selectedPatrons, setSelectedPatrons] = useState<number[]>([]);
+  const [patronsData, setPatronsData] = useState<PaginatedResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const toast = useToast();
 
   useEffect(() => {
-    fetchNews();
+    fetchPatrons();
   }, [currentPage, itemsPerPage, searchQuery]);
 
-  const fetchNews = async () => {
+  const fetchPatrons = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/news?page=${currentPage}&limit=${itemsPerPage}&search=${searchQuery}`);
+      const response = await fetch(`${API_BASE_URL}/patrons?page=${currentPage}&limit=${itemsPerPage}&search=${searchQuery}`);
       const data: PaginatedResponse = await response.json();
-      setNewsData(data);
+      setPatronsData(data);
     } catch (error) {
-      console.error('Error fetching News:', error);
+      console.error('Error fetching Patrons:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSelectPage = (id: number) => {
-    setSelectedNews(prevSelected =>
+  const handleSelectPatron = (id: number) => {
+    setSelectedPatrons(prevSelected =>
       prevSelected.includes(id)
-        ? prevSelected.filter(newsId => newsId !== id)
+        ? prevSelected.filter(patronId => patronId !== id)
         : [...prevSelected, id]
     );
   };
 
   const handleSelectAll = () => {
-    if (newsData?.items?.length === selectedNews.length) {
-      setSelectedNews([]);
+    if (patronsData?.items?.length === selectedPatrons.length) {
+      setSelectedPatrons([]);
     } else {
-      setSelectedNews(newsData?.items.map(news => news.id) || []);
+      setSelectedPatrons(patronsData?.items.map(patron => patron.id) || []);
     }
   };
 
@@ -76,7 +77,7 @@ const News: React.FC = () => {
 
     try {
       const deletePromises = ids.map(id =>
-        fetch(`${API_BASE_URL}/news/${id}`, {
+        fetch(`${API_BASE_URL}/patrons/${id}`, {
           method: 'DELETE',
         })
       );
@@ -84,18 +85,18 @@ const News: React.FC = () => {
       await Promise.all(deletePromises);
 
       toast({
-        title: 'News deleted.',
-        description: `Successfully deleted ${ids.length} news item(s).`,
+        title: 'Patrons deleted.',
+        description: `Successfully deleted ${ids.length} patron(s).`,
         status: 'success',
         duration: 5000,
         isClosable: true,
       });
-      setSelectedNews([]);
-      fetchNews(); // Refresh the page list
+      setSelectedPatrons([]);
+      fetchPatrons(); // Refresh the page list
     } catch (error) {
       toast({
         title: 'Delete Error',
-        description: 'Failed to delete News.',
+        description: 'Failed to delete Patrons.',
         status: 'error',
         duration: 5000,
         isClosable: true,
@@ -113,16 +114,16 @@ const News: React.FC = () => {
     );
   }
 
-  if (!newsData || newsData.items.length === 0) {
+  if (!patronsData || patronsData.items.length === 0) {
     return (
       <Container maxW="container" py={6}>
         <Flex justify="space-between" mb={4}>
-          <Text fontSize="2xl" fontWeight="bold">News Overview</Text>
-          <Link to="/admin/news/add-news">
-            <Button colorScheme="teal">Add News</Button>
+          <Text fontSize="2xl" fontWeight="bold">Patrons Overview</Text>
+          <Link to="/admin/patrons/add-patron">
+            <Button colorScheme="teal">Add Patron</Button>
           </Link>
         </Flex>
-        <Text>No News found.</Text>
+        <Text>No Patrons found.</Text>
       </Container>
     );
   }
@@ -130,58 +131,58 @@ const News: React.FC = () => {
   return (
     <Container maxW="container" py={4}>
       <Flex justify="space-between" mb={4}>
-        <Text fontSize="2xl" fontWeight="bold">News Overview</Text>
-        <Link to="/admin/news/add-news">
-          <Button colorScheme="teal">Add News</Button>
+        <Text fontSize="2xl" fontWeight="bold">Patrons Overview</Text>
+        <Link to="/admin/patrons/add-patron">
+          <Button colorScheme="teal">Add Patron</Button>
         </Link>
       </Flex>
       <Box mb={4}>
         <Input
-          placeholder="Search News..."
+          placeholder="Search Patrons..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
       </Box>
       <Flex justify="space-between" mb={4}>
         <Checkbox
-          isChecked={selectedNews.length === newsData.items.length}
+          isChecked={selectedPatrons.length === patronsData.items.length}
           onChange={handleSelectAll}
         >
           Select All
         </Checkbox>
-        {selectedNews.length > 0 && (
-          <Button colorScheme="red" onClick={() => handleDelete(selectedNews)}>
+        {selectedPatrons.length > 0 && (
+          <Button colorScheme="red" onClick={() => handleDelete(selectedPatrons)}>
             Delete Selected
           </Button>
         )}
       </Flex>
       <Stack spacing={4}>
-        {newsData.items.map(news => (
-          <Box key={news.id} p={4} borderWidth={1} borderRadius="md" boxShadow="md">
-            <Flex direction="column" mb={2}>
-              <HStack spacing={2}>
+        {patronsData.items.map(patron => (
+          <Box key={patron.id} p={4} borderWidth={1} borderRadius="md" boxShadow="md">
+            <Flex justify="space-between" mb={2}>
+              <HStack>
                 <Checkbox
-                  isChecked={selectedNews.includes(news.id)}
-                  onChange={() => handleSelectPage(news.id)}
+                  isChecked={selectedPatrons.includes(patron.id)}
+                  onChange={() => handleSelectPatron(patron.id)}
                 />
                 <Text fontSize="xl" fontWeight="bold">
-                  {news.title}
+                  {patron.name}
                 </Text>
               </HStack>
-              <Text fontSize="md" color="gray.600">{news.news_date}</Text>
-              <HStack spacing={2} mt={2}>
-                <Link to={`/admin/news/edit-news/${news.id}`}>
+              <HStack spacing={2}>
+                <Link to={`/admin/patrons/edit-patron/${patron.id}`}>
                   <Button size="sm" colorScheme="teal">Edit</Button>
                 </Link>
                 <Button
                   size="sm"
                   colorScheme="red"
-                  onClick={() => handleDelete([news.id])}
+                  onClick={() => handleDelete([patron.id])}
                 >
                   Delete
                 </Button>
               </HStack>
             </Flex>
+            <Text>{patron.content}</Text>
           </Box>
         ))}
       </Stack>
@@ -194,11 +195,11 @@ const News: React.FC = () => {
             Previous
           </Button>
           <Text>
-            Page {newsData.currentPage} of {newsData.totalPages}
+            Page {patronsData.currentPage} of {patronsData.totalPages}
           </Text>
           <Button
-            onClick={() => setCurrentPage(prev => Math.min(prev + 1, newsData.totalPages))}
-            disabled={currentPage === newsData.totalPages}
+            onClick={() => setCurrentPage(prev => Math.min(prev + 1, patronsData.totalPages))}
+            disabled={currentPage === patronsData.totalPages}
           >
             Next
           </Button>
@@ -217,4 +218,4 @@ const News: React.FC = () => {
   );
 };
 
-export default News;
+export default Patrons;

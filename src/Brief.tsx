@@ -1,112 +1,126 @@
-import React from 'react';
-import { Box, Container, Flex, Grid, GridItem, Heading, Text, Image, Link, Icon, useColorModeValue } from '@chakra-ui/react';
-import { FaPaintBrush, FaBook, FaUser, FaCalendarAlt, FaGraduationCap, FaClock } from 'react-icons/fa';
-import { title } from 'process';
+import React, { useEffect, useState } from 'react';
+import { Box, Container, Grid, GridItem, Heading, Text, Image, Link, Icon, Flex, useColorModeValue } from '@chakra-ui/react';
+import { FaPaintBrush, FaBook, FaUser, FaCalendarAlt, FaGraduationCap, FaClock, FaArrowRight, FaHandPointer, FaInfoCircle } from 'react-icons/fa'; // Additional icons
+import { API_BASE_URL } from './API';
+import { bold } from '@uiw/react-md-editor';
 
-const brief = 
-{
-  title: "বিস্তর বর্ণনা",
-  description: "১৯৯৩ সালে প্রতিষ্ঠিত ভোগাইল বগাদি মাধ্যমিক বিদ্যালয়, আলমডাঙ্গা উপজেলার মধ্যে অন্যতম স্বনামধন্য একটি প্রতিষ্ঠান । বিদ্যালয়টি সংশ্লিষ্ট এলাকায় মাধ্যমিক শিক্ষা নিশ্চিত করার লক্ষে প্রতিষ্টিত হয়। প্রাথমিক ভাবে খুব সীমিত সংখ্যক ছাত্রছাত্রী নিয়ে বিদ্যালয়টি যাত্রা শুরু করলেও বর্তমানে প্রতিষ্ঠানটিতে প্রতি বছর ২০০+ ছাত্রছাত্রী ভর্তি হয়।  বর্তমানে বিদ্যালয়টিতে মহেশপুর, খোরোদ, গৌরীহ্রদ ও ভোগাইল বগাদি থেকে ছাত্রছাত্রী পড়তে আসে।",
-  image: "https://www.noakhalicoll.gov.bd/midea/featuredimage/featuredimage2023-08-04-13-16-10_64ccfa1a4eee0.jpg",
-  links: {
-      title:  "এক ঝলক",
-      description: "",
-      link: ""
-  }
+// Define TypeScript interfaces for API data
+interface SchoolInfo {
+  id: number;
+  site_name: string;
+  description: string;
+  email: string;
+  phone: string;
+  address: string;
+  logo: string;
+  facebook: string;
+  twitter: string;
+  instagram: string;
+  linkedin: string;
+  long_description: string;
+  image: string;
+  brief_section: number;
 }
 
+interface Section {
+  id: number;
+  class_id: number;
+  type: string;
+  name: string;
+  value: string;
+}
+
+// Map numbers to icons
+const iconMapping: { [key: number]: React.ElementType } = {
+  1: FaArrowRight,
+  2: FaHandPointer,
+  3: FaInfoCircle,
+  4: FaPaintBrush,
+  5: FaBook,
+  6: FaUser,
+  7: FaCalendarAlt,
+  8: FaGraduationCap,
+  9: FaClock,
+};
+
+const getRandomColor = () => {
+  const colors = ['red', 'green', 'blue', 'orange', 'purple', 'pink', 'cyan'];
+  return colors[Math.floor(Math.random() * colors.length)];
+};
+
 const Brief: React.FC = () => {
+  const [schoolInfo, setSchoolInfo] = useState<SchoolInfo | null>(null);
+  const [sections, setSections] = useState<Section[]>([]);
+
   const bgColor = useColorModeValue('gray.100', 'gray.800');
   const textColor = useColorModeValue('gray.800', 'gray.200');
-  
+
+  useEffect(() => {
+    const fetchSchoolInfo = async () => {
+      try {
+        const response = await fetch('http://localhost:4000/school-info');
+        const data: SchoolInfo = await response.json();
+        setSchoolInfo(data);
+        
+        const sectionsResponse = await fetch(`http://localhost:4000/menus/classes/${data.brief_section}/sections`);
+        const sectionsData: Section[] = await sectionsResponse.json();
+        setSections(sectionsData);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    };
+
+    fetchSchoolInfo();
+  }, []);
+
+  if (!schoolInfo) return <div>Loading...</div>;
+
   return (
     <Box bg={bgColor} py={8}>
       <Container maxW="container.lg">
-        <Box textAlign="justify" mb={8}>
+        <Box textAlign="justify" mb={8} px={{ base: 4, md: 0 }}>
           <Heading colorScheme='teal' as="h1" size="xl" mb={4}>
-            {brief.title}
+            {schoolInfo.site_name}
           </Heading>
-          <Text fontWeight="bold" fontSize="lg" color={textColor}>
-          {brief.description}
+          <Text fontWeight="bold" fontSize="lg" color={textColor} mb={6}>
+            {schoolInfo.long_description}
           </Text>
         </Box>
-        <Grid templateColumns={{ base: '1fr', md: 'repeat(3, 1fr)' }} gap={6}>
+        <Grid templateColumns={{ base: '1fr', md: '1fr 1fr' }} gap={6}>
           <GridItem>
-            <Image src={brief.image} alt="College Image" borderRadius="md" />
+            <Image
+              src={API_BASE_URL + schoolInfo.image}
+              alt="School Image"
+              borderRadius="md"
+              boxSize={{ base: '100%', md: '200px' }} // Adjusted size for responsiveness
+              objectFit="cover"
+            />
           </GridItem>
           <GridItem>
-            <Flex direction="column" gap={4}>
-              <Link href="page.php?id=1" _hover={{ textDecoration: 'none' }}>
-                <Flex align="center" mb={2}>
-                  <Icon as={FaPaintBrush} boxSize={6} color="teal.500" />
-                  <Box ml={3}>
-                    <Heading as="h3" size="md">
-                      At a Glance
-                    </Heading>
-                    <Text fontSize="sm">Programs, faculty, students, achievements, campus, facilities, history.</Text>
-                  </Box>
-                </Flex>
-              </Link>
-              <Link href="page.php?id=3" _hover={{ textDecoration: 'none' }}>
-                <Flex align="center" mb={2}>
-                  <Icon as={FaBook} boxSize={6} color="teal.500" />
-                  <Box ml={3}>
-                    <Heading as="h3" size="md">
-                      Mission & Vision
-                    </Heading>
-                    <Text fontSize="sm">Educate, inspire, empower, excellence, innovation, community, leadership.</Text>
-                  </Box>
-                </Flex>
-              </Link>
-              <Link href="page.php?id=5" _hover={{ textDecoration: 'none' }}>
-                <Flex align="center">
-                  <Icon as={FaUser} boxSize={6} color="teal.500" />
-                  <Box ml={3}>
-                    <Heading as="h3" size="md">
-                      Infrastructure
-                    </Heading>
-                    <Text fontSize="sm">Classrooms, labs, library, dorms, sports facilities.</Text>
-                  </Box>
-                </Flex>
-              </Link>
-            </Flex>
-          </GridItem>
-          <GridItem>
-            <Flex direction="column" gap={4}>
-              <Link href="page.php?id=2" _hover={{ textDecoration: 'none' }}>
-                <Flex align="center" mb={2}>
-                  <Icon as={FaCalendarAlt} boxSize={6} color="teal.500" />
-                  <Box ml={3}>
-                    <Heading as="h3" size="md">
-                      Brief of History
-                    </Heading>
-                    <Text fontSize="sm">Established, growth, achievements, challenges, leadership, legacy.</Text>
-                  </Box>
-                </Flex>
-              </Link>
-              <Link href="page.php?id=4" _hover={{ textDecoration: 'none' }}>
-                <Flex align="center" mb={2}>
-                  <Icon as={FaGraduationCap} boxSize={6} color="teal.500" />
-                  <Box ml={3}>
-                    <Heading as="h3" size="md">
-                      Rules & Regulation
-                    </Heading>
-                    <Text fontSize="sm">Conduct, academics, attendance, consequences.</Text>
-                  </Box>
-                </Flex>
-              </Link>
-              <Link href="page.php?id=6" _hover={{ textDecoration: 'none' }}>
-                <Flex align="center">
-                  <Icon as={FaClock} boxSize={6} color="teal.500" />
-                  <Box ml={3}>
-                    <Heading as="h3" size="md">
-                      Facilities
-                    </Heading>
-                    <Text fontSize="sm">Campus, classrooms, library, labs, dorms, recreational areas, sports facilities.</Text>
-                  </Box>
-                </Flex>
-              </Link>
-            </Flex>
+            <Grid templateColumns={{ base: '1fr', md: '1fr 1fr' }} gap={4}>
+              {sections.map((section, index) => {
+                const IconComponent = iconMapping[(index % Object.keys(iconMapping).length) + 1] || FaPaintBrush; // Map numbers to icons
+                const leftBorderColor = index % 2 === 0 ? getRandomColor() : 'transparent'; // Random color for left border
+                const rightBorderColor = index % 2 === 1 ? getRandomColor() : 'transparent'; // Random color for right border
+                return (
+                  <GridItem key={section.id} borderRight={`4px solid ${rightBorderColor}`} borderLeft={`4px solid ${leftBorderColor}`}>
+                    <Link href={section.value} _hover={{ textDecoration: 'none' }}>
+                      <Flex align="center" p={3} borderWidth="1px" borderRadius="md" _hover={{ bg: 'teal.50' }}>
+                        <Icon as={IconComponent} boxSize={4} color="teal.500" /> {/* Reduced icon size */}
+                        <Box ml={2}>
+                          <Heading as="h3" fontWeight="bold" size="md" color={textColor}> {/* Reduced heading size */}
+                            {section.name}
+                          </Heading>
+                          <Text fontSize="xs" color={textColor} mt={1}> {/* Reduced text size */}
+                            {/* Optional description */}
+                          </Text>
+                        </Box>
+                      </Flex>
+                    </Link>
+                  </GridItem>
+                );
+              })}
+            </Grid>
           </GridItem>
         </Grid>
       </Container>

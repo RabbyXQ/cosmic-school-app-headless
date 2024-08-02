@@ -9,6 +9,7 @@ import {
   useToast,
   Heading,
   Stack,
+  Select,
 } from '@chakra-ui/react';
 import MarkdownEditor from 'react-markdown-editor-lite';
 import 'react-markdown-editor-lite/lib/index.css';
@@ -21,7 +22,7 @@ const uploadImage = async (file: File): Promise<{ url: string }> => {
   const formData = new FormData();
   formData.append('file', file);
 
-  const response = await fetch(`${API_BASE_URL}/pages/upload`, {
+  const response = await fetch(API_BASE_URL + '/pages/upload', {
     method: 'POST',
     body: formData,
   });
@@ -31,11 +32,12 @@ const uploadImage = async (file: File): Promise<{ url: string }> => {
   }
 
   const data = await response.json();
-  return { url: `${API_BASE_URL}${data.url}` };
+  return { url: API_BASE_URL + data.url };
 };
 
-const AddNewsPage: React.FC = () => {
-  const [title, setTitle] = useState<string>('');
+const AddPatron: React.FC = () => {
+  const [type, setType] = useState<string>('');
+  const [name, setName] = useState<string>('');
   const [content, setContent] = useState<string>('');
   const [uploading, setUploading] = useState<boolean>(false);
   const toast = useToast();
@@ -60,38 +62,40 @@ const AddNewsPage: React.FC = () => {
   };
 
   const handleAdd = async () => {
-    if (title.trim() && content.trim()) {
+    if (type.trim() && name.trim() && content.trim()) {
       setUploading(true);
       try {
-        const response = await fetch(`${API_BASE_URL}/news/`, {
+        const response = await fetch(API_BASE_URL + '/patrons', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            title,
+            type,
+            name,
             content,
           }),
         });
 
         if (!response.ok) {
-          throw new Error('Failed to add news');
+          throw new Error('Failed to add patron');
         }
-
+        
         toast({
-          title: 'News added.',
-          description: `The news "${title}" has been added.`,
+          title: 'Patron added.',
+          description: `The patron "${name}" has been added.`,
           status: 'success',
           duration: 5000,
           isClosable: true,
         });
 
-        setTitle('');
+        setType('');
+        setName('');
         setContent('');
       } catch (error) {
         toast({
           title: 'Add Error',
-          description: 'Failed to add the news.',
+          description: 'Failed to add the patron.',
           status: 'error',
           duration: 5000,
           isClosable: true,
@@ -102,7 +106,7 @@ const AddNewsPage: React.FC = () => {
     } else {
       toast({
         title: 'Input Error',
-        description: 'Title and content are required.',
+        description: 'Type, name, and content are required.',
         status: 'error',
         duration: 5000,
         isClosable: true,
@@ -112,29 +116,41 @@ const AddNewsPage: React.FC = () => {
 
   return (
     <Container maxW="container" py={6}>
-      <Heading size="lg" mb={6}>Add New News</Heading>
+      <Heading size="lg" mb={6}>Add New Patron</Heading>
       <Box p={6} borderRadius="md" boxShadow="md">
         <Stack spacing={4}>
-          <FormControl id="news-title" mb={4}>
-            <FormLabel>Title</FormLabel>
+          <FormControl id="patron-type" mb={4}>
+            <FormLabel>Type</FormLabel>
+            <Select
+              placeholder="Select type"
+              value={type}
+              onChange={(e) => setType(e.target.value)}
+            >
+              <option value="head">Head</option>
+              <option value="asst">Assistant Head</option>
+              <option value="sect">Secretary</option>
+            </Select>
+          </FormControl>
+          <FormControl id="patron-name" mb={4}>
+            <FormLabel>Name</FormLabel>
             <Input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Enter news title"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Enter patron name"
             />
           </FormControl>
-          <FormControl id="news-content" mb={4}>
+          <FormControl id="patron-content" mb={4}>
             <FormLabel>Content</FormLabel>
             <MarkdownEditor
               value={content}
               renderHTML={(text) => mdParser.render(text)}
               onChange={({ text }: { text: string }) => setContent(text)}
-              placeholder="Enter news content"
+              placeholder="Enter patron content"
               onImageUpload={handleImageUpload}
             />
           </FormControl>
           <Button colorScheme="teal" onClick={handleAdd} isDisabled={uploading}>
-            {uploading ? 'Adding...' : 'Add News'}
+            {uploading ? 'Adding...' : 'Add Patron'}
           </Button>
         </Stack>
       </Box>
@@ -142,4 +158,4 @@ const AddNewsPage: React.FC = () => {
   );
 };
 
-export default AddNewsPage;
+export default AddPatron;

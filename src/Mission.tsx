@@ -101,7 +101,7 @@ const MidMenu: React.FC = () => {
             }))
           }))
         );
-        setMenuItems(transformedItems);
+        setMenuItems(transformedItems.slice(0, 3)); // Limit to 3 items
       } catch (error) {
         console.error('Error fetching data:', error);
       }
