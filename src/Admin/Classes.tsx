@@ -1,17 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Button,
   Checkbox,
   Container,
-  Divider,
   Flex,
   FormControl,
   FormLabel,
   Input,
   Stack,
   Text,
-  useColorModeValue,
   useDisclosure,
   Modal,
   ModalOverlay,
@@ -22,20 +20,38 @@ import {
   useToast
 } from '@chakra-ui/react';
 
-const initialClasses = [
-  { id: 1, name: 'Math 101' },
-  { id: 2, name: 'English Literature' },
-  { id: 3, name: 'History 202' }
-];
-
 const Classes: React.FC = () => {
-  const [classes, setClasses] = useState(initialClasses);
+  const [classes, setClasses] = useState<{ id: number; name: string }[]>([]);
   const [selectedClasses, setSelectedClasses] = useState<number[]>([]);
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [currentClass, setCurrentClass] = useState<{ id: number; name: string } | null>(null);
   const [newClassName, setNewClassName] = useState<string>('');
   const { isOpen, onOpen, onClose } = useDisclosure();
   const toast = useToast();
+
+  // Fetch classes from the API
+  const fetchClasses = async () => {
+    try {
+      const response = await fetch('http://localhost:4000/classes');
+      if (!response.ok) throw new Error('Network response was not ok');
+      const data = await response.json();
+      setClasses(data);
+    } catch (error) {
+      console.error('Error fetching classes:', error);
+      toast({
+        title: 'Error fetching classes.',
+        description: 'There was an error fetching the list of classes.',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+    }
+  };
+
+  // Fetch classes on component mount
+  useEffect(() => {
+    fetchClasses();
+  }, []);
 
   const handleSelect = (id: number) => {
     setSelectedClasses(prevState =>
@@ -45,50 +61,103 @@ const Classes: React.FC = () => {
     );
   };
 
-  const handleAddClass = () => {
+  const handleAddClass = async () => {
     if (newClassName.trim()) {
-      setClasses([...classes, { id: Date.now(), name: newClassName }]);
-      setNewClassName('');
-      toast({
-        title: 'Class added.',
-        description: `The class "${newClassName}" has been added.`,
-        status: 'success',
-        duration: 5000,
-        isClosable: true,
-      });
+      try {
+        await fetch('http://localhost:4000/classes', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ name: newClassName }),
+        });
+
+        await fetchClasses(); // Refresh the list of classes
+        setNewClassName('');
+        toast({
+          title: 'Class added.',
+          description: `The class "${newClassName}" has been added.`,
+          status: 'success',
+          duration: 5000,
+          isClosable: true,
+        });
+      } catch (error) {
+        console.error('Error adding class:', error);
+        toast({
+          title: 'Error adding class.',
+          description: 'There was an error adding the class.',
+          status: 'error',
+          duration: 5000,
+          isClosable: true,
+        });
+      }
     }
   };
 
-  const handleEditClass = () => {
+  const handleEditClass = async () => {
     if (currentClass && newClassName.trim()) {
-      setClasses(classes.map(cls =>
-        cls.id === currentClass.id
-          ? { ...cls, name: newClassName }
-          : cls
-      ));
-      setCurrentClass(null);
-      setNewClassName('');
-      setIsEditing(false);
+      try {
+        await fetch(`http://localhost:4000/classes/${currentClass.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ name: newClassName }),
+        });
+
+        await fetchClasses(); // Refresh the list of classes
+        setCurrentClass(null);
+        setNewClassName('');
+        setIsEditing(false);
+        toast({
+          title: 'Class updated.',
+          description: `The class "${newClassName}" has been updated.`,
+          status: 'success',
+          duration: 5000,
+          isClosable: true,
+        });
+      } catch (error) {
+        console.error('Error updating class:', error);
+        toast({
+          title: 'Error updating class.',
+          description: 'There was an error updating the class.',
+          status: 'error',
+          duration: 5000,
+          isClosable: true,
+        });
+      }
+    }
+  };
+
+  const handleDeleteClasses = async () => {
+    try {
+      await fetch('http://localhost:4000/classes', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ ids: selectedClasses }),
+      });
+
+      await fetchClasses(); // Refresh the list of classes
+      setSelectedClasses([]);
       toast({
-        title: 'Class updated.',
-        description: `The class "${newClassName}" has been updated.`,
+        title: 'Classes deleted.',
+        description: 'Selected classes have been deleted.',
         status: 'success',
         duration: 5000,
         isClosable: true,
       });
+    } catch (error) {
+      console.error('Error deleting classes:', error);
+      toast({
+        title: 'Error deleting classes.',
+        description: 'There was an error deleting the classes.',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
     }
-  };
-
-  const handleDeleteClasses = () => {
-    setClasses(classes.filter(cls => !selectedClasses.includes(cls.id)));
-    setSelectedClasses([]);
-    toast({
-      title: 'Classes deleted.',
-      description: 'Selected classes have been deleted.',
-      status: 'success',
-      duration: 5000,
-      isClosable: true,
-    });
   };
 
   const openEditModal = (cls: { id: number; name: string }) => {

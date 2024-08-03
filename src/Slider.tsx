@@ -7,7 +7,6 @@ import { Box, Image, Text } from '@chakra-ui/react';
 const SliderComponent: React.FC = () => {
   const [images, setImages] = useState<string[]>([]);
   const [galleryId, setGalleryId] = useState<number | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   const settings = {
@@ -34,7 +33,6 @@ const SliderComponent: React.FC = () => {
       } catch (error) {
         console.error('Failed to fetch initial data:', error);
         setError('Failed to fetch data.');
-        setLoading(false);
       }
     };
 
@@ -47,19 +45,15 @@ const SliderComponent: React.FC = () => {
         }
         const data = await response.json();
         setImages(data.map((item: { image: string }) => `http://localhost:4000${item.image}`));
-        setLoading(false);
       } catch (error) {
         console.error('Failed to fetch gallery images:', error);
         setError('Failed to load images.');
-        setLoading(false);
       }
     };
 
     fetchInitialData();
   }, []);
 
-  if (loading) return <Text>Loading...</Text>;
-  if (error) return <Text color="red">{error}</Text>;
 
   return (
     <Box color="teal" w="95%" h="20%" maxW="container" mx="auto" mt={5}>

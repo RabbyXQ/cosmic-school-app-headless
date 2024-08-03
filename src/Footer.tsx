@@ -1,6 +1,78 @@
-import React from 'react';
-import { Box, Flex, Text, Link, Stack, useColorModeValue, Divider, Input, Button } from '@chakra-ui/react';
+import React, {useEffect, useState} from 'react';
+import { Image, Box, Flex, Text, Link, Stack, useColorModeValue, Divider, Input, Button } from '@chakra-ui/react';
 import { EmailIcon, PhoneIcon, ViewIcon } from '@chakra-ui/icons';
+import { API_BASE_URL } from './API';
+
+const FooterAbout: React.FC = () => {
+  const [schoolInfo, setSchoolInfo] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchSchoolInfo = async () => {
+      try {
+        const response = await fetch('http://localhost:4000/school-info');
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        const data = await response.json();
+        setSchoolInfo(data);
+      } catch (error) {
+        setError('Failed to fetch school information');
+        console.error('Error fetching school info:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSchoolInfo();
+  }, []);
+
+  const bgColor = useColorModeValue('white.50', 'gray.900');
+  const textColor = useColorModeValue('gray.700', 'gray.200');
+  const cardBgColor = useColorModeValue('white.50', 'gray.900');
+
+  if (loading) {
+    return (
+      <Box px={5} py={5} flex="1" minW={{ base: 'full', md: '23%' }} mb={{ base: '4', md: '0' }}>
+        
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box px={5} py={5} flex="1" minW={{ base: 'full', md: '23%' }} mb={{ base: '4', md: '0' }}>
+        <Text color="red.500">{error}</Text>
+      </Box>
+    );
+  }
+
+  return (
+    <Box px={5} py={5} flex="1" minW={{ base: 'full', md: '23%' }} mb={{ base: '4', md: '0' }} bg={cardBgColor}>
+      <Text fontSize="lg" fontWeight="bold" mb="4">About Us</Text>
+      <Text mb="4">{schoolInfo?.description || 'No description available.'}</Text>
+      <Flex align="center" mb="2">
+        <ViewIcon mr="2" />
+        <Text>{schoolInfo?.address || 'Address not available'}</Text>
+      </Flex>
+      <Flex align="center" mb="2">
+        <PhoneIcon mr="2" />
+        <Text>{schoolInfo?.phone || 'Phone number not available'}</Text>
+      </Flex>
+      <Flex align="center" mb="2">
+        <EmailIcon mr="2" />
+        <Text>{schoolInfo?.email || 'Email not available'}</Text>
+      </Flex>
+      {schoolInfo?.logo && (
+        <Image src={API_BASE_URL+schoolInfo.logo} alt="School Logo" mt={4} boxSize="100px" objectFit="cover" />
+      )}
+    </Box>
+  );
+};
+
+
+
 
 const Footer: React.FC = () => {
   const bgColor = useColorModeValue('gray.200', 'gray.700');
@@ -15,24 +87,8 @@ const Footer: React.FC = () => {
         wrap="wrap"
         mb="6"
       >
-        <Box px={5} py={5} flex="1" minW={{ base: 'full', md: '23%' }} mb={{ base: '4', md: '0' }}>
-          <Text fontSize="lg" fontWeight="bold" mb="4">About Us</Text>
-          <Text mb="4">
-            We are committed to providing the best services and products to our customers. Our mission is to deliver quality and excellence in everything we do.
-          </Text>
-          <Flex align="center" mb="2">
-            <ViewIcon mr="2" />
-            <Text>123 Main Street, Anytown, USA</Text>
-          </Flex>
-          <Flex align="center" mb="2">
-            <PhoneIcon mr="2" />
-            <Text>(555) 123-4567</Text>
-          </Flex>
-          <Flex align="center" mb="2">
-            <EmailIcon mr="2" />
-            <Text>info@example.com</Text>
-          </Flex>
-        </Box>
+        
+        <FooterAbout/>
         
         <Box px={5} py={5} flex="1" minW={{ base: 'full', md: '23%' }} mb={{ base: '4', md: '0' }}>
           <Text fontSize="lg" fontWeight="bold" mb="4">Quick Links</Text>

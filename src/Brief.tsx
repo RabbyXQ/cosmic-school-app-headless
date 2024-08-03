@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Container, Grid, GridItem, Heading, Text, Image, Link, Icon, Flex, useColorModeValue } from '@chakra-ui/react';
+import { Box, Container, Grid, GridItem, Heading, Text, Image, Icon, Flex, useColorModeValue } from '@chakra-ui/react';
 import { FaPaintBrush, FaBook, FaUser, FaCalendarAlt, FaGraduationCap, FaClock, FaArrowRight, FaHandPointer, FaInfoCircle } from 'react-icons/fa'; // Additional icons
+import { useNavigate } from 'react-router-dom'; // Import useNavigate
 import { API_BASE_URL } from './API';
-import { bold } from '@uiw/react-md-editor';
 
 // Define TypeScript interfaces for API data
 interface SchoolInfo {
@@ -52,6 +52,7 @@ const Brief: React.FC = () => {
   const [schoolInfo, setSchoolInfo] = useState<SchoolInfo | null>(null);
   const [sections, setSections] = useState<Section[]>([]);
 
+  const navigate = useNavigate(); // Initialize navigate
   const bgColor = useColorModeValue('gray.100', 'gray.800');
   const textColor = useColorModeValue('gray.800', 'gray.200');
 
@@ -73,7 +74,7 @@ const Brief: React.FC = () => {
     fetchSchoolInfo();
   }, []);
 
-  if (!schoolInfo) return <div>Loading...</div>;
+  if (!schoolInfo) return <div></div>;
 
   return (
     <Box bg={bgColor} py={8}>
@@ -102,21 +103,34 @@ const Brief: React.FC = () => {
                 const IconComponent = iconMapping[(index % Object.keys(iconMapping).length) + 1] || FaPaintBrush; // Map numbers to icons
                 const leftBorderColor = index % 2 === 0 ? getRandomColor() : 'transparent'; // Random color for left border
                 const rightBorderColor = index % 2 === 1 ? getRandomColor() : 'transparent'; // Random color for right border
+                
+                // Modify href based on section type
+                const handleClick = () => {
+                  const path = section.type === 'page' ? `/pages/${section.value}` : section.value;
+                  navigate(path); // Navigate programmatically
+                };
+
                 return (
                   <GridItem key={section.id} borderRight={`4px solid ${rightBorderColor}`} borderLeft={`4px solid ${leftBorderColor}`}>
-                    <Link href={section.value} _hover={{ textDecoration: 'none' }}>
-                      <Flex align="center" p={3} borderWidth="1px" borderRadius="md" _hover={{ bg: 'teal.50' }}>
-                        <Icon as={IconComponent} boxSize={4} color="teal.500" /> {/* Reduced icon size */}
-                        <Box ml={2}>
-                          <Heading as="h3" fontWeight="bold" size="md" color={textColor}> {/* Reduced heading size */}
-                            {section.name}
-                          </Heading>
-                          <Text fontSize="xs" color={textColor} mt={1}> {/* Reduced text size */}
-                            {/* Optional description */}
-                          </Text>
-                        </Box>
-                      </Flex>
-                    </Link>
+                    <Flex
+                      align="center"
+                      p={3}
+                      borderWidth="1px"
+                      borderRadius="md"
+                      _hover={{ bg: 'teal.50' }}
+                      onClick={handleClick} // Handle click
+                      cursor="pointer" // Show pointer cursor
+                    >
+                      <Icon as={IconComponent} boxSize={4} color="teal.500" /> {/* Reduced icon size */}
+                      <Box ml={2}>
+                        <Heading as="h3" fontWeight="bold" size="md" color={textColor}> {/* Reduced heading size */}
+                          {section.name}
+                        </Heading>
+                        <Text fontSize="xs" color={textColor} mt={1}> {/* Reduced text size */}
+                          {/* Optional description */}
+                        </Text>
+                      </Box>
+                    </Flex>
                   </GridItem>
                 );
               })}

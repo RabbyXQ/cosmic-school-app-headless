@@ -1,16 +1,13 @@
-// src/pages/Subjects.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Button,
   Checkbox,
   Container,
-  Divider,
   Flex,
   FormControl,
   FormLabel,
   Input,
-  Select,
   Stack,
   Text,
   useColorModeValue,
@@ -24,29 +21,35 @@ import {
   useToast
 } from '@chakra-ui/react';
 
-// Sample data
-const classes = [
-  { id: 1, name: 'Class 1' },
-  { id: 2, name: 'Class 2' },
-  { id: 3, name: 'Class 3' }
-];
-
-const initialSubjects = [
-  { id: 1, name: 'Math', classId: 1 },
-  { id: 2, name: 'English', classId: 2 },
-  { id: 3, name: 'History', classId: 3 }
-];
+interface Subject {
+  id: number;
+  name: string;
+}
 
 const Subjects: React.FC = () => {
-  const [subjects, setSubjects] = useState(initialSubjects);
+  const [subjects, setSubjects] = useState<Subject[]>([]);
   const [selectedSubjects, setSelectedSubjects] = useState<number[]>([]);
   const [isEditing, setIsEditing] = useState<boolean>(false);
-  const [currentSubject, setCurrentSubject] = useState<{ id: number; name: string; classId: number } | null>(null);
+  const [currentSubject, setCurrentSubject] = useState<Subject | null>(null);
   const [newSubjectName, setNewSubjectName] = useState<string>('');
-  const [selectedClassId, setSelectedClassId] = useState<number | null>(null);
-  const [filterClassId, setFilterClassId] = useState<number | null>(null);
+  const [filterName, setFilterName] = useState<string>('');
   const { isOpen, onOpen, onClose } = useDisclosure();
   const toast = useToast();
+
+  useEffect(() => {
+    // Fetch subjects from the API on component mount
+    const fetchSubjects = async () => {
+      try {
+        const response = await fetch('http://localhost:4000/subjects');
+        const data: Subject[] = await response.json();
+        setSubjects(data);
+      } catch (error) {
+        console.error('Error fetching subjects:', error);
+      }
+    };
+
+    fetchSubjects();
+  }, []);
 
   const handleSelect = (id: number) => {
     setSelectedSubjects(prevState =>
@@ -56,64 +59,93 @@ const Subjects: React.FC = () => {
     );
   };
 
-  const handleAddSubject = () => {
-    if (newSubjectName.trim() && selectedClassId !== null) {
-      setSubjects([...subjects, { id: Date.now(), name: newSubjectName, classId: selectedClassId }]);
-      setNewSubjectName('');
-      setSelectedClassId(null);
-      toast({
-        title: 'Subject added.',
-        description: `The subject "${newSubjectName}" has been added.`,
-        status: 'success',
-        duration: 5000,
-        isClosable: true,
-      });
+  const handleAddSubject = async () => {
+    if (newSubjectName.trim()) {
+      try {
+        const response = await fetch('http://localhost:4000/subjects', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ name: newSubjectName }),
+        });
+        const data: Subject = await response.json();
+        setSubjects([...subjects, data]);
+        setNewSubjectName('');
+        toast({
+          title: 'Subject added.',
+          description: `The subject "${newSubjectName}" has been added.`,
+          status: 'success',
+          duration: 5000,
+          isClosable: true,
+        });
+        onClose();
+      } catch (error) {
+        console.error('Error adding subject:', error);
+      }
     }
   };
 
-  const handleEditSubject = () => {
-    if (currentSubject && newSubjectName.trim() && selectedClassId !== null) {
-      setSubjects(subjects.map(sub =>
-        sub.id === currentSubject.id
-          ? { ...sub, name: newSubjectName, classId: selectedClassId }
-          : sub
+  const handleEditSubject = async () => {
+    if (currentSubject && newSubjectName.trim()) {
+      try {
+        await fetch(`http://localhost:4000/subjects/${currentSubject.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ name: newSubjectName }),
+        });
+        setSubjects(subjects.map(sub =>
+          sub.id === currentSubject.id
+            ? { ...sub, name: newSubjectName }
+            : sub
+        ));
+        setCurrentSubject(null);
+        setNewSubjectName('');
+        setIsEditing(false);
+        toast({
+          title: 'Subject updated.',
+          description: `The subject "${newSubjectName}" has been updated.`,
+          status: 'success',
+          duration: 5000,
+          isClosable: true,
+        });
+        onClose();
+      } catch (error) {
+        console.error('Error updating subject:', error);
+      }
+    }
+  };
+
+  const handleDeleteSubjects = async () => {
+    try {
+      await Promise.all(selectedSubjects.map(id =>
+        fetch(`http://localhost:4000/subjects/${id}`, { method: 'DELETE' })
       ));
-      setCurrentSubject(null);
-      setNewSubjectName('');
-      setSelectedClassId(null);
-      setIsEditing(false);
+      setSubjects(subjects.filter(sub => !selectedSubjects.includes(sub.id)));
+      setSelectedSubjects([]);
       toast({
-        title: 'Subject updated.',
-        description: `The subject "${newSubjectName}" has been updated.`,
+        title: 'Subjects deleted.',
+        description: 'Selected subjects have been deleted.',
         status: 'success',
         duration: 5000,
         isClosable: true,
       });
+    } catch (error) {
+      console.error('Error deleting subjects:', error);
     }
   };
 
-  const handleDeleteSubjects = () => {
-    setSubjects(subjects.filter(sub => !selectedSubjects.includes(sub.id)));
-    setSelectedSubjects([]);
-    toast({
-      title: 'Subjects deleted.',
-      description: 'Selected subjects have been deleted.',
-      status: 'success',
-      duration: 5000,
-      isClosable: true,
-    });
-  };
-
-  const openEditModal = (sub: { id: number; name: string; classId: number }) => {
+  const openEditModal = (sub: Subject) => {
     setCurrentSubject(sub);
     setNewSubjectName(sub.name);
-    setSelectedClassId(sub.classId);
     setIsEditing(true);
     onOpen();
   };
 
-  const filteredSubjects = filterClassId
-    ? subjects.filter(sub => sub.classId === filterClassId)
+  const filteredSubjects = filterName
+    ? subjects.filter(sub => sub.name.toLowerCase().includes(filterName.toLowerCase()))
     : subjects;
 
   const bgColor = useColorModeValue('white', 'gray.700');
@@ -125,19 +157,13 @@ const Subjects: React.FC = () => {
         <Text fontSize="2xl" fontWeight="bold">List of Subjects</Text>
         <Button colorScheme="teal" onClick={() => { setIsEditing(false); onOpen(); }}>Add Subject</Button>
       </Flex>
-      <FormControl id="filter-class" mb={4}>
-        <FormLabel>Filter by Class</FormLabel>
-        <Select
-          placeholder="Select class"
-          value={filterClassId ?? ''}
-          onChange={(e) => setFilterClassId(Number(e.target.value))}
-        >
-          {classes.map(cls => (
-            <option key={cls.id} value={cls.id}>
-              {cls.name}
-            </option>
-          ))}
-        </Select>
+      <FormControl id="filter-name" mb={4}>
+        <FormLabel>Filter by Name</FormLabel>
+        <Input
+          value={filterName}
+          onChange={(e) => setFilterName(e.target.value)}
+          placeholder="Enter subject name"
+        />
       </FormControl>
       <Stack spacing={4} mb={4}>
         {filteredSubjects.map(sub => (
@@ -148,7 +174,6 @@ const Subjects: React.FC = () => {
               mr={3}
             />
             <Text flex="1">{sub.name}</Text>
-            <Text flex="1">Class: {classes.find(cls => cls.id === sub.classId)?.name}</Text>
             <Button colorScheme="blue" onClick={() => openEditModal(sub)}>Edit</Button>
           </Flex>
         ))}
@@ -174,20 +199,6 @@ const Subjects: React.FC = () => {
                 onChange={(e) => setNewSubjectName(e.target.value)}
                 placeholder="Enter subject name"
               />
-            </FormControl>
-            <FormControl id="class-select" mb={4}>
-              <FormLabel>Select Class</FormLabel>
-              <Select
-                placeholder="Select class"
-                value={selectedClassId ?? ''}
-                onChange={(e) => setSelectedClassId(Number(e.target.value))}
-              >
-                {classes.map(cls => (
-                  <option key={cls.id} value={cls.id}>
-                    {cls.name}
-                  </option>
-                ))}
-              </Select>
             </FormControl>
           </ModalBody>
           <ModalFooter>

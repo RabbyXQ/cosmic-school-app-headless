@@ -1,10 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Button,
   Checkbox,
   Container,
-  Divider,
   Flex,
   FormControl,
   FormLabel,
@@ -12,7 +11,6 @@ import {
   Select,
   Stack,
   Text,
-  useColorModeValue,
   useDisclosure,
   Modal,
   ModalOverlay,
@@ -22,43 +20,60 @@ import {
   ModalFooter,
   useToast
 } from '@chakra-ui/react';
-import { MdClass, MdPerson, MdSchedule } from 'react-icons/md';
+import axios from 'axios';
 
-// Sample data
-const classes = [
-  { id: 1, name: 'Math 101' },
-  { id: 2, name: 'English Literature' },
-  { id: 3, name: 'History 202' }
-];
+// Define the types
+interface Class {
+  id: number;
+  name: string;
+}
 
-const teachers = [
-  { id: 1, name: 'Ms. Smith' },
-  { id: 2, name: 'Mr. Johnson' },
-  { id: 3, name: 'Dr. Brown' }
-];
+interface Section {
+  id: number;
+  class_id: number;
+  name: string;
+  shift: string;
+}
 
-const shifts = [
-  { id: 1, name: 'Morning' },
-  { id: 2, name: 'Afternoon' },
-  { id: 3, name: 'Evening' }
-];
+const apiUrl = 'http://localhost:4000/sections'; // Update with your API URL
+const classesApiUrl = 'http://localhost:4000/classes'; // API URL for classes
 
-const initialSections = [
-  { id: 1, name: 'A', classId: 1, teacherId: 1, shiftId: 1 },
-  { id: 2, name: 'B', classId: 2, teacherId: 2, shiftId: 2 }
-];
+const shifts = ['Morning', 'Afternoon', 'Evening'];
 
 const Sections: React.FC = () => {
-  const [sections, setSections] = useState(initialSections);
+  const [sections, setSections] = useState<Section[]>([]);
+  const [classes, setClasses] = useState<Class[]>([]);
   const [selectedSections, setSelectedSections] = useState<number[]>([]);
   const [isEditing, setIsEditing] = useState<boolean>(false);
-  const [currentSection, setCurrentSection] = useState<{ id: number; name: string; classId: number; teacherId: number; shiftId: number } | null>(null);
+  const [currentSection, setCurrentSection] = useState<Section | null>(null);
   const [newSectionName, setNewSectionName] = useState<string>('');
   const [selectedClassId, setSelectedClassId] = useState<number | null>(null);
-  const [selectedTeacherId, setSelectedTeacherId] = useState<number | null>(null);
-  const [selectedShiftId, setSelectedShiftId] = useState<number | null>(null);
+  const [selectedShift, setSelectedShift] = useState<string | null>(null);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const toast = useToast();
+
+  useEffect(() => {
+    fetchSections();
+    fetchClasses();
+  }, []);
+
+  const fetchSections = async () => {
+    try {
+      const { data } = await axios.get<Section[]>(apiUrl);
+      setSections(data);
+    } catch (error) {
+      console.error('Error fetching sections:', error);
+    }
+  };
+
+  const fetchClasses = async () => {
+    try {
+      const { data } = await axios.get<Class[]>(classesApiUrl);
+      setClasses(data);
+    } catch (error) {
+      console.error('Error fetching classes:', error);
+    }
+  };
 
   const handleSelect = (id: number) => {
     setSelectedSections(prevState =>
@@ -68,64 +83,116 @@ const Sections: React.FC = () => {
     );
   };
 
-  const handleAddSection = () => {
-    if (newSectionName.trim() && selectedClassId !== null && selectedTeacherId !== null && selectedShiftId !== null) {
-      setSections([...sections, { id: Date.now(), name: newSectionName, classId: selectedClassId, teacherId: selectedTeacherId, shiftId: selectedShiftId }]);
-      setNewSectionName('');
-      setSelectedClassId(null);
-      setSelectedTeacherId(null);
-      setSelectedShiftId(null);
-      toast({
-        title: 'Section added.',
-        description: `The section "${newSectionName}" has been added.`,
-        status: 'success',
-        duration: 5000,
-        isClosable: true,
-      });
-    }
-  };
-
-  const handleEditSection = () => {
-    if (currentSection && newSectionName.trim() && selectedClassId !== null && selectedTeacherId !== null && selectedShiftId !== null) {
-      setSections(sections.map(sec =>
-        sec.id === currentSection.id
-          ? { ...sec, name: newSectionName, classId: selectedClassId, teacherId: selectedTeacherId, shiftId: selectedShiftId }
-          : sec
-      ));
-      setCurrentSection(null);
-      setNewSectionName('');
-      setSelectedClassId(null);
-      setSelectedTeacherId(null);
-      setSelectedShiftId(null);
-      setIsEditing(false);
-      toast({
-        title: 'Section updated.',
-        description: `The section "${newSectionName}" has been updated.`,
-        status: 'success',
-        duration: 5000,
-        isClosable: true,
-      });
-    }
-  };
-
-  const handleDeleteSections = () => {
-    setSections(sections.filter(sec => !selectedSections.includes(sec.id)));
-    setSelectedSections([]);
-    toast({
-      title: 'Sections deleted.',
-      description: 'Selected sections have been deleted.',
-      status: 'success',
-      duration: 5000,
-      isClosable: true,
+  const handleAddSection = async () => {
+    console.log('Adding section:', {
+      name: newSectionName,
+      class_id: selectedClassId,
+      shift: selectedShift
     });
+
+    if (newSectionName.trim() && selectedClassId !== null && selectedShift) {
+      try {
+        await axios.post(apiUrl, {
+          name: newSectionName,
+          class_id: selectedClassId,
+          shift: selectedShift
+        });
+        fetchSections();
+        setNewSectionName('');
+        setSelectedClassId(null);
+        setSelectedShift(null);
+        toast({
+          title: 'Section added.',
+          description: `The section "${newSectionName}" has been added.`,
+          status: 'success',
+          duration: 5000,
+          isClosable: true,
+        });
+        onClose();
+      } catch (error) {
+        console.error('Error adding section:', error);
+        toast({
+          title: 'Error adding section.',
+          description: 'There was an error adding the section.',
+          status: 'error',
+          duration: 5000,
+          isClosable: true,
+        });
+      }
+    }
   };
 
-  const openEditModal = (sec: { id: number; name: string; classId: number; teacherId: number; shiftId: number }) => {
+  const handleEditSection = async () => {
+    console.log('Updating section:', {
+      id: currentSection?.id,
+      name: newSectionName,
+      class_id: selectedClassId,
+      shift: selectedShift
+    });
+
+    if (currentSection && newSectionName.trim() && selectedClassId !== null && selectedShift) {
+      try {
+        await axios.put(`${apiUrl}/${currentSection.id}`, {
+          name: newSectionName,
+          class_id: selectedClassId,
+          shift: selectedShift
+        });
+        fetchSections();
+        setCurrentSection(null);
+        setNewSectionName('');
+        setSelectedClassId(null);
+        setSelectedShift(null);
+        setIsEditing(false);
+        toast({
+          title: 'Section updated.',
+          description: `The section "${newSectionName}" has been updated.`,
+          status: 'success',
+          duration: 5000,
+          isClosable: true,
+        });
+        onClose();
+      } catch (error) {
+        console.error('Error updating section:', error);
+        toast({
+          title: 'Error updating section.',
+          description: 'There was an error updating the section.',
+          status: 'error',
+          duration: 5000,
+          isClosable: true,
+        });
+      }
+    }
+  };
+
+  const handleDeleteSections = async () => {
+    try {
+      await Promise.all(selectedSections.map(id => axios.delete(`${apiUrl}/${id}`)));
+      fetchSections();
+      setSelectedSections([]);
+      toast({
+        title: 'Sections deleted.',
+        description: 'Selected sections have been deleted.',
+        status: 'success',
+        duration: 5000,
+        isClosable: true,
+      });
+    } catch (error) {
+      console.error('Error deleting sections:', error);
+      toast({
+        title: 'Error deleting sections.',
+        description: 'There was an error deleting the sections.',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+    }
+  };
+
+  const openEditModal = (sec: Section) => {
     setCurrentSection(sec);
     setNewSectionName(sec.name);
-    setSelectedClassId(sec.classId);
-    setSelectedTeacherId(sec.teacherId);
-    setSelectedShiftId(sec.shiftId);
+    setSelectedClassId(sec.class_id);
+    setSelectedShift(sec.shift);
     setIsEditing(true);
     onOpen();
   };
@@ -145,9 +212,8 @@ const Sections: React.FC = () => {
               mr={3}
             />
             <Text flex="1">{sec.name}</Text>
-            <Text flex="1">Class: {classes.find(cls => cls.id === sec.classId)?.name}</Text>
-            <Text flex="1">Teacher: {teachers.find(teacher => teacher.id === sec.teacherId)?.name}</Text>
-            <Text flex="1">Shift: {shifts.find(shift => shift.id === sec.shiftId)?.name}</Text>
+            <Text flex="1">Class: {classes.find(cls => cls.id === sec.class_id)?.name}</Text>
+            <Text flex="1">Shift: {sec.shift}</Text>
             <Button colorScheme="blue" onClick={() => openEditModal(sec)}>Edit</Button>
           </Flex>
         ))}
@@ -188,30 +254,16 @@ const Sections: React.FC = () => {
                 ))}
               </Select>
             </FormControl>
-            <FormControl id="teacher-select" mb={4}>
-              <FormLabel>Select Teacher</FormLabel>
-              <Select
-                placeholder="Select teacher"
-                value={selectedTeacherId ?? ''}
-                onChange={(e) => setSelectedTeacherId(Number(e.target.value))}
-              >
-                {teachers.map(teacher => (
-                  <option key={teacher.id} value={teacher.id}>
-                    {teacher.name}
-                  </option>
-                ))}
-              </Select>
-            </FormControl>
             <FormControl id="shift-select" mb={4}>
               <FormLabel>Select Shift</FormLabel>
               <Select
                 placeholder="Select shift"
-                value={selectedShiftId ?? ''}
-                onChange={(e) => setSelectedShiftId(Number(e.target.value))}
+                value={selectedShift ?? ''}
+                onChange={(e) => setSelectedShift(e.target.value)}
               >
                 {shifts.map(shift => (
-                  <option key={shift.id} value={shift.id}>
-                    {shift.name}
+                  <option key={shift} value={shift}>
+                    {shift}
                   </option>
                 ))}
               </Select>

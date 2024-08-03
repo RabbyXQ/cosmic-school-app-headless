@@ -1,4 +1,3 @@
-// src/pages/EditEventPage.tsx
 import React, { useEffect, useState } from 'react';
 import {
   Box,
@@ -10,46 +9,87 @@ import {
   useToast,
   Heading,
   Stack,
+  Select,
 } from '@chakra-ui/react';
 import MarkdownEditor from 'react-markdown-editor-lite';
-import 'react-markdown-editor-lite/lib/index.css'; // Import Markdown editor styles
-import MarkdownIt from 'markdown-it'; // For rendering Markdown to HTML
-import { useParams, useNavigate } from 'react-router-dom';
-
-// Simulated fetch and update functions
-const fetchEventById = async (id: string): Promise<{ title: string, content: string }> => {
-  // Replace with actual fetch logic
-  return { title: 'Sample Event', content: 'This is a sample event content' };
-};
-
-const updateEvent = async (id: string, data: { title: string, content: string }) => {
-  // Replace with actual update logic
-};
-
-const uploadImage = async (file: File): Promise<{ url: string }> => {
-  const imageUrl = URL.createObjectURL(file); // Replace with actual upload logic
-  return { url: imageUrl };
-};
+import 'react-markdown-editor-lite/lib/index.css';
+import MarkdownIt from 'markdown-it';
+import { useParams } from 'react-router-dom';
+import { SettingMenu } from './Settings/Settings';
+import { API_BASE_URL } from '../API';
 
 const mdParser = new MarkdownIt();
+
+const uploadImage = async (file: File): Promise<{ url: string }> => {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const response = await fetch(API_BASE_URL + "/pages/upload", {
+    method: 'POST',
+    body: formData,
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to upload image');
+  }
+
+  const data = await response.json();
+  return { url: API_BASE_URL + data.url };
+};
 
 const EditEventPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [title, setTitle] = useState<string>('');
   const [content, setContent] = useState<string>('');
+  const [galleryId, setGalleryId] = useState<string>('');
+  const [galleries, setGalleries] = useState<{ id: number; name: string }[]>([]);
   const [uploading, setUploading] = useState<boolean>(false);
   const toast = useToast();
-  const navigate = useNavigate();
 
   useEffect(() => {
-    const loadEvent = async () => {
-      const event = await fetchEventById(id as string);
-      setTitle(event.title);
-      setContent(event.content);
+    const fetchGalleries = async () => {
+      try {
+        const response = await fetch(API_BASE_URL + "/gallery/categories/");
+        if (!response.ok) {
+          throw new Error('Failed to fetch gallery categories');
+        }
+        const data = await response.json();
+        setGalleries(data);
+      } catch (error) {
+        toast({
+          title: 'Fetch Error',
+          description: 'Failed to fetch gallery categories.',
+          status: 'error',
+          duration: 5000,
+          isClosable: true,
+        });
+      }
     };
 
-    loadEvent();
-  }, [id]);
+    const fetchEvent = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/events/${id}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch event data');
+        }
+        const data = await response.json();
+        setTitle(data.title);
+        setContent(data.content);
+        setGalleryId(data.gallery_id);
+      } catch (error) {
+        toast({
+          title: 'Fetch Error',
+          description: 'Failed to fetch event data.',
+          status: 'error',
+          duration: 5000,
+          isClosable: true,
+        });
+      }
+    };
+
+    fetchGalleries();
+    fetchEvent();
+  }, [id, toast]);
 
   const handleImageUpload = async (file: File) => {
     setUploading(true);
@@ -71,21 +111,47 @@ const EditEventPage: React.FC = () => {
   };
 
   const handleUpdate = async () => {
-    if (title.trim() && content.trim()) {
-      await updateEvent(id as string, { title, content });
-      toast({
-        title: 'Event updated.',
-        description: `The event "${title}" has been updated.`,
-        status: 'success',
-        duration: 5000,
-        isClosable: true,
-      });
+    if (title.trim() && content.trim() && galleryId.trim()) {
+      setUploading(true);
+      try {
+        const response = await fetch(`${API_BASE_URL}/events/${id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            title,
+            content,
+            gallery_id: galleryId,
+          }),
+        });
 
-      navigate('/events');
+        if (!response.ok) {
+          throw new Error('Failed to update event');
+        }
+
+        toast({
+          title: 'Event updated.',
+          description: `The event "${title}" has been updated.`,
+          status: 'success',
+          duration: 5000,
+          isClosable: true,
+        });
+      } catch (error) {
+        toast({
+          title: 'Update Error',
+          description: 'Failed to update the event.',
+          status: 'error',
+          duration: 5000,
+          isClosable: true,
+        });
+      } finally {
+        setUploading(false);
+      }
     } else {
       toast({
         title: 'Input Error',
-        description: 'Both title and content are required.',
+        description: 'Title, content, and gallery ID are required.',
         status: 'error',
         duration: 5000,
         isClosable: true,
@@ -94,8 +160,8 @@ const EditEventPage: React.FC = () => {
   };
 
   return (
-    <Container maxW="container.md" py={6}>
-      <Heading mb={6}>Edit Event</Heading>
+    <Container maxW="container" py={6}>
+      <Heading size="lg" mb={6}>Edit Event</Heading>
       <Box bg="white" p={6} borderRadius="md" boxShadow="md">
         <Stack spacing={4}>
           <FormControl id="event-title" mb={4}>
@@ -116,8 +182,22 @@ const EditEventPage: React.FC = () => {
               onImageUpload={handleImageUpload}
             />
           </FormControl>
+          <FormControl id="event-gallery-id" mb={4}>
+            <FormLabel>Gallery</FormLabel>
+            <Select
+              placeholder="Select gallery"
+              value={galleryId}
+              onChange={(e) => setGalleryId(e.target.value)}
+            >
+              {galleries.map((gallery) => (
+                <option key={gallery.id} value={gallery.id}>
+                  {gallery.name}
+                </option>
+              ))}
+            </Select>
+          </FormControl>
           <Button colorScheme="teal" onClick={handleUpdate} isDisabled={uploading}>
-            Update Event
+            {uploading ? 'Updating...' : 'Update Event'}
           </Button>
         </Stack>
       </Box>

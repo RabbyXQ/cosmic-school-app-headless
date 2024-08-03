@@ -17,6 +17,7 @@ import Events from './Events';
 import { mission } from './mocks/mission';
 import MidMenu from './Mission';
 import NewsBoard from './NewsBoard';
+import EventsBoard from './EventsBoard';
 
 
 function Home() {
@@ -51,7 +52,7 @@ function Home() {
          <NewsBoard showPaging={false} showAll={true} pageSize={5}/>
         </Box>
         <Box>
-        <Events/>
+        <EventsBoard showPaging={false} showAll={true}/>
         </Box>
       </Grid>
     </Box>

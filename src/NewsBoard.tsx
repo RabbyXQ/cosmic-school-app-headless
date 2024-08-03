@@ -109,12 +109,7 @@ const NewsBoard: React.FC<NewsBoardProps> = ({
   }, [searchQuery, newsData]);
 
   if (loading) {
-    return (
-      <Container maxW="container.lg" py={6}>
-        <Flex justify="center" align="center" height="100vh">
-          <Spinner size="xl" />
-        </Flex>
-      </Container>
+    return (<></>
     );
   }
 

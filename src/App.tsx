@@ -50,6 +50,11 @@ import AddPatron from './Admin/AddPatron';
 import EditPatron from './Admin/EditPatron';
 import ViewPatron from './ViewPatrons';
 import ActivePatron from './ActivePatron';
+import ViewEvents from './ViewEvents';
+import EventsBoard from './EventsBoard';
+import RoutineTable from './RoutineTable';
+import SyllabusManager from './Admin/SyllabusManager';
+import SyllabusTable from './SyllabusTable';
 
 function App() {
   return (
@@ -65,6 +70,7 @@ function App() {
         <Route path="/admin/notices/add-notice" element={<AdminLayout><AddNoticePage/></AdminLayout>} />
         <Route path="/admin/notices/edit-notice/:id" element={<AdminLayout><EditNoticePage/></AdminLayout>} />
         <Route path="/admin/news" element={<AdminLayout><News/></AdminLayout>} />
+
         <Route path="/admin/news/add-news" element={<AdminLayout><AddNewsPage/></AdminLayout>} />
         <Route path="/admin/edit-news/:id" element={<AdminLayout><EditNewsPage/></AdminLayout>} />
         <Route path="/admin/admissions" element={<AdminLayout><VerifyAdmission/></AdminLayout>} />
@@ -84,9 +90,27 @@ function App() {
         <Route path="/admin/settings/school-info" element={<AdminLayout><SchoolInfo/></AdminLayout>} />
         <Route path="/admin/settings/menus" element={<AdminLayout><Menus/></AdminLayout>} />
 
+        <Route path="/admin/syllabus" element={<AdminLayout><SyllabusManager/></AdminLayout>} />
+
+
         <Route path="/admin/events" element={<AdminLayout><Events/></AdminLayout>} />
-        <Route path="/admin/add-event" element={<AdminLayout><AddEventPage/></AdminLayout>} />
-        <Route path="/admin/edit-event/:id" element={<AdminLayout><EditEventPage/></AdminLayout>} />
+        <Route path="/admin/events/add-event" element={<AdminLayout><AddEventPage/></AdminLayout>} />
+        <Route path="/admin/events/edit-event/:id" element={<AdminLayout><EditEventPage/></AdminLayout>} />
+        <Route path="/events/" element={<>
+          <Header/>
+          <EventsBoard showPaging={true} showAll={false} pageSize={10} />
+          <Footer/>
+          </>
+          } />  
+        <Route path="/events/:id" element={<>
+          <Header/>
+          <ViewEvents/>
+          <Footer/>
+          </>
+          } />   
+
+        
+
         <Route path="/admin/gallery" element={<AdminLayout><Gallery/></AdminLayout>} />
         <Route path="/admin/files" element={<AdminLayout><Files/></AdminLayout>} />
         <Route path="/admin/attendances" element={<AdminLayout><Attendances/></AdminLayout>} />
@@ -121,9 +145,25 @@ function App() {
           </>
           } />  
 
+          
+
           <Route path="/news/:id" element={<>
           <Header/>
           <ViewNews/>
+          <Footer/>
+          </>
+          } /> 
+
+          <Route path="/routine" element={<>
+          <Header/>
+          <RoutineTable/>
+          <Footer/>
+          </>
+          } /> 
+
+          <Route path="/syllabus" element={<>
+          <Header/>
+          <SyllabusTable/>
           <Footer/>
           </>
           } /> 
@@ -147,7 +187,7 @@ function App() {
           <ActivePatron/>
           <Footer/>
           </>
-          } />   
+          } />  
 
       </Routes>
     </Router>
