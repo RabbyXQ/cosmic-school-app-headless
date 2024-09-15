@@ -4,6 +4,7 @@ import { SunIcon, MoonIcon, InfoOutlineIcon, SettingsIcon } from '@chakra-ui/ico
 import AdminSideBar from './AdminSideBar';
 import SideItem from './SideItem';
 import MobileAdminHeader from './MobileAdminHeader';
+import AuthGuard from '../Secure/AuthGuard';
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -17,23 +18,25 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const borderColor = useColorModeValue('gray.200', 'gray.700');
   
   return (
-    <Flex minHeight="100vh">
-      <Box
-        display={{base: "none", md: "block"}}
-        w="250px"
-        bg={bg}
-        color={color}
-        p={5}
-        borderRight="1px"
-        borderColor={borderColor}
-      >
-        <AdminSideBar/>
-      </Box>
-      <Box flex="1" p={5} bg={useColorModeValue('white', 'gray.800')}>
-        <MobileAdminHeader/>
-        {children}
-      </Box>
-    </Flex>
+    <AuthGuard>
+      <Flex minHeight="100vh">
+        <Box
+          display={{base: "none", md: "block"}}
+          w="250px"
+          bg={bg}
+          color={color}
+          p={5}
+          borderRight="1px"
+          borderColor={borderColor}
+        >
+          <AdminSideBar/>
+        </Box>
+        <Box flex="1" p={5} bg={useColorModeValue('white', 'gray.800')}>
+          <MobileAdminHeader/>
+          {children}
+        </Box>
+      </Flex>
+    </AuthGuard>
   );
 };
 

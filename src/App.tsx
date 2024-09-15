@@ -55,6 +55,9 @@ import EventsBoard from './EventsBoard';
 import RoutineTable from './RoutineTable';
 import SyllabusManager from './Admin/SyllabusManager';
 import SyllabusTable from './SyllabusTable';
+import Logout from './Secure/Logout';
+import Signup from './Secure/Signup';
+import Login from './Secure/Login';
 
 function App() {
   return (
@@ -123,6 +126,14 @@ function App() {
 
 
         <Route path="/admin/subjects" element={<AdminLayout><Subjects/></AdminLayout>} />
+
+        <Route path="/admin/logout" element={<AdminLayout><Logout/></AdminLayout>} />
+
+        <Route path="/signup" element={<Signup/>} />
+
+        <Route path="/login" element={<Login/>} />
+
+
 
         <Route path="*" element={<NotFound />} /> {/* Optional */}
         <Route path="/pages/:slug" element={<>
